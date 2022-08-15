@@ -1,0 +1,7 @@
+cable_landing_controller:
+  cable_landing_controller:
+    ros__parameters:
+      controller_period_ms: 100
+      landed_altitude_threshold: 0.5
+      reached_position_euclidean_distance_threshold: 0.1
+      min_target_altitude: 1.
