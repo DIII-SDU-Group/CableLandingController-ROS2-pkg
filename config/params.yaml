@@ -5,3 +5,28 @@ cable_landing_controller:
       landed_altitude_threshold: 0.5
       reached_position_euclidean_distance_threshold: 0.1
       min_target_altitude: 1.
+      position_MPC_dt: 0.1
+      position_MPC_vx_max: 10.
+      position_MPC_vy_max: 10.
+      position_MPC_vz_max: 5.
+      position_MPC_vpsi_max: 1.06
+      position_MPC_ax_max: 10.
+      position_MPC_ay_max: 10.
+      position_MPC_az_max: 10.
+      position_MPC_apsi_max: 1.06
+      position_MPC_wx: 0.
+      position_MPC_wy: 0.
+      position_MPC_wz: 0.
+      position_MPC_wpsi: 10.
+      position_MPC_wvx: 10.00
+      position_MPC_wvy: 10.00
+      position_MPC_wvz: 10.00
+      position_MPC_wvpsi: 1.
+      position_MPC_wx_last: 100.
+      position_MPC_wy_last: 100.
+      position_MPC_wz_last: 100.
+      position_MPC_wpsi_last: 10.
+      position_MPC_wvx_last: 10.
+      position_MPC_wvy_last: 10.
+      position_MPC_wvz_last: 10.
+      position_MPC_wvpsi_last: 1.

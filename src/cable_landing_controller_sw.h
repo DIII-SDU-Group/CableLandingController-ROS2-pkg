@@ -13,6 +13,7 @@
 #include <chrono>
 #include <iostream>
 #include <queue>
+#include <vector>
 
 #include <eigen3/Eigen/Core>
 #include <eigen3/Eigen/Geometry>
@@ -29,14 +30,23 @@
 #include <rclcpp_action/rclcpp_action.hpp>
 #include <rclcpp_components/register_node_macro.hpp>
 
+#include <tf2_ros/transform_listener.h>
+#include <tf2_ros/buffer.h>
+#include <tf2/exceptions.h>
+
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/transform_stamped.hpp>
 
 #include "iii_interfaces/msg/control_state.hpp"
 #include "iii_interfaces/action/takeoff.hpp"
+#include "iii_interfaces/action/landing.hpp"
+#include "iii_interfaces/action/fly_to_position.hpp"
 
 #include "geometry.h"
 #include "blocking_queue.h"
+
+#include "PositionMPCStepFunction.h"
+#include "rt_nonfinite.h"
 
 /*****************************************************************************/
 // Defines
@@ -46,93 +56,93 @@
 
 using namespace std::chrono_literals;
 
+#define LOG_INFO(str) RCLCPP_INFO(this->get_logger(),str)
+
 typedef Eigen::Matrix<float, 3, 1> pos3_t;
 typedef Eigen::Matrix<float, 4, 1> pos4_t;
 typedef Eigen::Matrix<float, 6, 1> state3_t;
 typedef Eigen::Matrix<float, 8, 1> state4_t;
 
-typedef enum {
+enum state_t {
 	init = 0,
 	on_ground_non_offboard,
 	in_flight_non_offboard,
-	on_ground,
+	arming,
+	setting_offboard,
 	taking_off,
 	hovering,
+	landing,
 	in_positional_flight
-} state_t;
+};
 
-typedef enum {
+enum request_type_t {
 	cancel_request,
 	takeoff_request,
+	landing_request,
 	fly_to_position_request
-} request_type_t;
+};
 
-typedef struct {
+struct takeoff_request_params_t {
 	float takeoff_altitude;
-} *takeoff_request_params_t;
+};
 
-typedef struct {
+struct fly_to_position_request_params_t {
 	pos4_t target_position;
-} *fly_to_position_request_params_t;
+};
 
-struct request_struct {
-	rclcpp_action::GoalUUID & action_id;
+struct request_t {
+	rclcpp_action::GoalUUID action_id;
 	request_type_t request_type;
 	void *request_params;
 
 
-	bool operator==(const struct request_struct & rhs) const {
+	bool operator==(const request_t & rhs) const {
 
 		return action_id == rhs.action_id && request_type == rhs.request_type && 
 			request_params == rhs.request_params;
 
 	}
 
-	struct request_struct & operator=(const struct request_struct & rhs) const {
+	void operator=(const request_t & rhs) {
 
-		struct request_struct ret_val = {
-			.action_id = rhs.action_id,
-			.request_type = rhs.request_type,
-			.request_params = rhs.request_params
-		};
-
-		return ret_val;
+		action_id = rhs.action_id;
+		request_type = rhs.request_type;
+		request_params = rhs.request_params;
 
 	}
 };
 
-typedef struct request_struct request_t;
-
-typedef enum {
+enum request_reply_type_t {
 	accept,
 	reject,
 	success,
-	fail
-} request_reply_type_t;
+	fail,
+	cancel
+};
 
-struct request_reply_struct {
-	rclcpp_action::GoalUUID & action_id;
+struct request_reply_t {
+	rclcpp_action::GoalUUID action_id;
 	request_reply_type_t reply_type;
 
-	bool operator==(const struct request_reply_struct & rhs) const {
+	bool operator==(const request_reply_t & rhs) const {
 
 		return action_id == rhs.action_id && reply_type == rhs.reply_type;
 
 	}
 
-	struct request_reply_struct & operator=(const struct request_reply_struct & rhs) const {
+	void operator=(const request_reply_t & rhs) {
 
-		struct request_reply_struct ret_val = {
-			.action_id = rhs.action_id,
-			.reply_type = rhs.reply_type
-		};
-
-		return ret_val;
+		action_id = rhs.action_id;
+		reply_type = rhs.reply_type;
 
 	}
 };
 
-typedef struct request_reply_struct request_reply_t;
+enum request_queue_action_t {
+	yes,
+	no,
+	if_match
+};
 
 /*****************************************************************************/
 // Class
@@ -143,13 +153,19 @@ public:
 	using Takeoff = iii_interfaces::action::Takeoff;
 	using GoalHandleTakeoff = rclcpp_action::ServerGoalHandle<Takeoff>;
 
+	using Landing = iii_interfaces::action::Landing;
+	using GoalHandleLanding = rclcpp_action::ServerGoalHandle<Landing>;
+
+	using FlyToPosition = iii_interfaces::action::FlyToPosition;
+	using GoalHandleFlyToPosition = rclcpp_action::ServerGoalHandle<FlyToPosition>;
+
 	CableLandingController(const std::string & node_name="cable_landing_controller", 
 			const std::string & node_namespace="/cable_landing_controller", 
 			const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
 	~CableLandingController();
 
 private:
-	// Action stuff:
+	// Takeoff action:
 	rclcpp_action::Server<Takeoff>::SharedPtr takeoff_server_;
 
 	rclcpp_action::GoalResponse handleGoalTakeoff(
@@ -159,6 +175,28 @@ private:
 	rclcpp_action::CancelResponse handleCancelTakeoff(const std::shared_ptr<GoalHandleTakeoff> goal_handle);
 	void handleAcceptedTakeoff(const std::shared_ptr<GoalHandleTakeoff> goal_handle);
 	void followTakeoffCompletion(const std::shared_ptr<GoalHandleTakeoff> goal_handle);
+
+	// Landing action:
+	rclcpp_action::Server<Landing>::SharedPtr landing_server_;
+
+	rclcpp_action::GoalResponse handleGoalLanding(
+		const rclcpp_action::GoalUUID & uuid, 
+		std::shared_ptr<const Landing::Goal> goal
+	);
+	rclcpp_action::CancelResponse handleCancelLanding(const std::shared_ptr<GoalHandleLanding> goal_handle);
+	void handleAcceptedLanding(const std::shared_ptr<GoalHandleLanding> goal_handle);
+	void followLandingCompletion(const std::shared_ptr<GoalHandleLanding> goal_handle);
+
+	// Fly to position action:
+	rclcpp_action::Server<FlyToPosition>::SharedPtr fly_to_position_server_;
+
+	rclcpp_action::GoalResponse handleGoalFlyToPosition(
+		const rclcpp_action::GoalUUID & uuid, 
+		std::shared_ptr<const FlyToPosition::Goal> goal
+	);
+	rclcpp_action::CancelResponse handleCancelFlyToPosition(const std::shared_ptr<GoalHandleFlyToPosition> goal_handle);
+	void handleAcceptedFlyToPosition(const std::shared_ptr<GoalHandleFlyToPosition> goal_handle);
+	void followFlyToPositionCompletion(const std::shared_ptr<GoalHandleFlyToPosition> goal_handle);
 
 	// General member variables:
 	state_t state_ = init;
@@ -172,7 +210,14 @@ private:
 	vector_t odom_pos_;
 	vector_t odom_vel_;
 
+	std::vector<state4_t> planned_trajectory_;
+	state4_t trajectory_target_;
+
 	std::mutex odometry_mutex_;
+	std::mutex planned_trajectory_mutex_;
+
+    std::shared_ptr<tf2_ros::TransformListener> transform_listener_{nullptr};
+    std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
 
 	BlockingQueue<request_t> request_queue_;
 	BlockingQueue<request_reply_t> request_reply_queue_;
@@ -191,7 +236,10 @@ private:
 
 	rclcpp::Publisher<iii_interfaces::msg::ControlState>::SharedPtr control_state_pub_;
 
-	//rclcpp::Publisher<OffboardControlMode>::SharedPtr offboard_control_mode_publisher_;
+	rclcpp::Publisher<px4_msgs::msg::OffboardControlMode>::SharedPtr offboard_control_mode_pub_;
+
+	rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr planned_traj_pub_;
+	rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr planned_target_pub_;
 
 	// General member methods:
 	void stateMachineCallback();
@@ -199,6 +247,10 @@ private:
 
 	bool isOffboard();
 	bool isArmed();
+
+	void setModeOffboard();
+
+	void land();
 
 	void arm();
 	void disarm();
@@ -210,15 +262,21 @@ private:
 					 float param5 = 0.0,
 					 float param6 = 0.0,
 					 float param7 = 0.0) const;
+	void publishOffboardControlMode() const;
 	void publishControlState();
 	void publishTrajectorySetpoint(state4_t set_point) const;
 
+	void publishPlannedTrajectory();
+
 	state4_t loadVehicleState();
+	geometry_msgs::msg::PoseStamped loadVehiclePose();
+	nav_msgs::msg::Path loadPlannedPath();
+	geometry_msgs::msg::PoseStamped loadPlannedTarget();
 
-	void resetPositionMPC();
-	state4_t stepPositionMPC(state4_t vehicle_state, state4_t target);
+	state4_t stepPositionMPC(state4_t vehicle_state, state4_t target, bool reset);
 
-	//void publish_offboard_control_mode() const;
+	void clearPlannedTrajectory();
+	void setTrajectoryTarget(state4_t target);
 
 };
 

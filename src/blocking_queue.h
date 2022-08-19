@@ -1,6 +1,12 @@
 #include <mutex>
 #include <queue>
 #include <condition_variable>
+#include <iostream>
+#include <chrono>
+
+#include <rclcpp/rclcpp.hpp>
+
+using namespace std::chrono_literals;
 
 template <class T> class BlockingQueue: public std::queue<T> {
 public:
@@ -14,7 +20,7 @@ public:
 
         std::unique_lock<std::mutex> wlck(writer_mutex_);
 
-        while(Full()) {
+        if(Full()) {
 
             if (!block) 
                 return false;
@@ -38,7 +44,7 @@ public:
     }
 
     bool Peak(T &read_item, bool block) {
-        
+
         return readItem(read_item, block, false);
 
     }
@@ -83,10 +89,11 @@ private:
 
         std::unique_lock<std::mutex> lck(reader_mutex_);
 
-        while(std::queue<T>::empty()) {
+        while(Empty()) {
 
-            if (!block)
+            if (!block) {
                 return false;
+            };
 
             is_not_empty_.wait(lck);
 
@@ -103,5 +110,4 @@ private:
         return true;
 
     }
-
 };
