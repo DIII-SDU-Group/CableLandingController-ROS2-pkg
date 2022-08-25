@@ -29,8 +29,8 @@ namespace optim {
 namespace coder {
 namespace qpactiveset {
 namespace Objective {
-double computeFval_ReuseHx(const b_struct_T *obj, double workspace[90321],
-                           const double f[160], const double x[161]);
+double computeFval_ReuseHx(const b_struct_T *obj, double workspace[87061],
+                           const double f[180], const double x[181]);
 
 }
 } // namespace qpactiveset

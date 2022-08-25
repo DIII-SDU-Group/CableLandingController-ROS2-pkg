@@ -18,7 +18,7 @@
 
 // Type Declarations
 namespace pos_MPC {
-struct g_struct_T;
+struct f_struct_T;
 
 }
 
@@ -28,7 +28,7 @@ namespace coder {
 namespace optim {
 namespace coder {
 namespace QRManager {
-void factorQR(g_struct_T *obj, const double b_A[90321], int mrows, int ncols);
+void factorQR(f_struct_T *obj, const double A[87061], int mrows, int ncols);
 
 }
 } // namespace coder

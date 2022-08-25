@@ -34,6 +34,7 @@ find_package(geometry_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
 
 add_executable(cable_landing_controller_sw 
   src/cable_landing_controller_sw.cpp
@@ -48,23 +49,21 @@ add_executable(cable_landing_controller_sw
   src/pos_MPC/countsort.cpp
   src/pos_MPC/deleteColMoveEnd.cpp
   src/pos_MPC/driver.cpp
-  src/pos_MPC/eye.cpp
   src/pos_MPC/factorQR.cpp
   src/pos_MPC/feasibleratiotest.cpp
   src/pos_MPC/feasibleX0ForWorkingSet.cpp
   src/pos_MPC/fullColLDL2_.cpp
   src/pos_MPC/iterate.cpp
-  src/pos_MPC/linearForm_.cpp
   src/pos_MPC/loadProblem.cpp
   src/pos_MPC/maxConstraintViolation.cpp
   src/pos_MPC/modifyOverheadPhaseOne_.cpp
+  src/pos_MPC/MPCStepFunction.cpp
+  src/pos_MPC/MPCStepFunction_data.cpp
+  src/pos_MPC/MPCStepFunction_initialize.cpp
+  src/pos_MPC/MPCStepFunction_rtwutil.cpp
+  src/pos_MPC/MPCStepFunction_terminate.cpp
   src/pos_MPC/partialColLDL3_.cpp
   src/pos_MPC/phaseone.cpp
-  src/pos_MPC/PositionMPCStepFunction.cpp
-  src/pos_MPC/PositionMPCStepFunction_data.cpp
-  src/pos_MPC/PositionMPCStepFunction_initialize.cpp
-  src/pos_MPC/PositionMPCStepFunction_rtwutil.cpp
-  src/pos_MPC/PositionMPCStepFunction_terminate.cpp
   src/pos_MPC/PresolveWorkingSet.cpp
   src/pos_MPC/quadprog.cpp
   src/pos_MPC/ratiotest.cpp
@@ -92,6 +91,7 @@ ament_target_dependencies(cable_landing_controller_sw
   std_msgs
   tf2
   tf2_ros
+  tf2_geometry_msgs
 )
 install(TARGETS cable_landing_controller_sw DESTINATION lib/${PROJECT_NAME})
 

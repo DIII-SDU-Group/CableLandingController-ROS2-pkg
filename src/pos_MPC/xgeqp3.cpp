@@ -19,7 +19,7 @@ namespace pos_MPC {
 namespace coder {
 namespace internal {
 namespace lapack {
-void xgeqp3(double b_A[134640], int m, int n, int jpvt[561], double tau[240])
+void xgeqp3(double A[144300], int m, int n, int jpvt[481], double tau[300])
 {
   int minmn;
   if (m < n) {
@@ -27,7 +27,7 @@ void xgeqp3(double b_A[134640], int m, int n, int jpvt[561], double tau[240])
   } else {
     minmn = n;
   }
-  std::memset(&tau[0], 0, 240U * sizeof(double));
+  std::memset(&tau[0], 0, 300U * sizeof(double));
   if (minmn < 1) {
     for (int j{0}; j < n; j++) {
       jpvt[j] = j + 1;
@@ -41,17 +41,17 @@ void xgeqp3(double b_A[134640], int m, int n, int jpvt[561], double tau[240])
         if (j + 1 != nfxd) {
           int ix;
           int iy;
-          ix = j * 240;
-          iy = (nfxd - 1) * 240;
+          ix = j * 300;
+          iy = (nfxd - 1) * 300;
           for (int k{0}; k < m; k++) {
             double temp;
             int i;
             int temp_tmp;
             temp_tmp = ix + k;
-            temp = b_A[temp_tmp];
+            temp = A[temp_tmp];
             i = iy + k;
-            b_A[temp_tmp] = b_A[i];
-            b_A[i] = temp;
+            A[temp_tmp] = A[i];
+            A[i] = temp;
           }
           jpvt[j] = jpvt[nfxd - 1];
           jpvt[nfxd - 1] = j + 1;
@@ -65,9 +65,9 @@ void xgeqp3(double b_A[134640], int m, int n, int jpvt[561], double tau[240])
     if (nfxd >= minmn) {
       nfxd = minmn;
     }
-    reflapack::qrf(b_A, m, n, nfxd, tau);
+    reflapack::qrf(A, m, n, nfxd, tau);
     if (nfxd < minmn) {
-      reflapack::qrpf(b_A, m, n, nfxd, tau, jpvt);
+      reflapack::qrpf(A, m, n, nfxd, tau, jpvt);
     }
   }
 }

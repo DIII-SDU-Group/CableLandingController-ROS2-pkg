@@ -29,8 +29,8 @@ namespace optim {
 namespace coder {
 namespace qpactiveset {
 namespace Objective {
-void computeGrad_StoreHx(b_struct_T *obj, const double H[25600],
-                         const double f[160], const double x[161]);
+void computeGrad_StoreHx(b_struct_T *obj, const double H[32400],
+                         const double f[180], const double x[181]);
 
 }
 } // namespace qpactiveset

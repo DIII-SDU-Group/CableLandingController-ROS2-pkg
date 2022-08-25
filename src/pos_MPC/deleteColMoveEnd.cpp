@@ -10,7 +10,7 @@
 
 // Include files
 #include "deleteColMoveEnd.h"
-#include "PositionMPCStepFunction_internal_types.h"
+#include "MPCStepFunction_internal_types.h"
 #include "rt_nonfinite.h"
 #include "xrotg.h"
 
@@ -20,7 +20,7 @@ namespace coder {
 namespace optim {
 namespace coder {
 namespace QRManager {
-void deleteColMoveEnd(g_struct_T *obj, int idx)
+void deleteColMoveEnd(f_struct_T *obj, int idx)
 {
   double c;
   double s;
@@ -42,7 +42,7 @@ void deleteColMoveEnd(g_struct_T *obj, int idx)
     obj->jpvt[idx - 1] = obj->jpvt[obj->ncols - 1];
     b_i = obj->minRowCol;
     for (k = 0; k < b_i; k++) {
-      obj->QR[k + 240 * (idx - 1)] = obj->QR[k + 240 * (obj->ncols - 1)];
+      obj->QR[k + 300 * (idx - 1)] = obj->QR[k + 300 * (obj->ncols - 1)];
     }
     obj->ncols--;
     u0 = obj->mrows;
@@ -64,19 +64,19 @@ void deleteColMoveEnd(g_struct_T *obj, int idx)
         endIdx = u0;
       }
       k = endIdx;
-      i = 240 * (idx - 1);
+      i = 300 * (idx - 1);
       while (k >= idx) {
         b_i = k + i;
         temp_tmp = obj->QR[b_i];
         internal::blas::xrotg(&obj->QR[(k + i) - 1], &temp_tmp, &c, &s);
         obj->QR[b_i] = temp_tmp;
-        b_i = 240 * (k - 1);
+        b_i = 300 * (k - 1);
         obj->QR[k + b_i] = 0.0;
-        QRk0 = k + 240 * idx;
+        QRk0 = k + 300 * idx;
         n = obj->ncols - idx;
         if (n >= 1) {
           for (b_k = 0; b_k < n; b_k++) {
-            b_temp_tmp = QRk0 + b_k * 240;
+            b_temp_tmp = QRk0 + b_k * 300;
             temp_tmp = obj->QR[b_temp_tmp];
             c_temp_tmp = obj->QR[b_temp_tmp - 1];
             obj->QR[b_temp_tmp] = c * temp_tmp - s * c_temp_tmp;
@@ -87,9 +87,9 @@ void deleteColMoveEnd(g_struct_T *obj, int idx)
         if (obj->mrows >= 1) {
           for (b_k = 0; b_k < n; b_k++) {
             b_temp_tmp = b_i + b_k;
-            temp_tmp = obj->Q[b_temp_tmp + 240];
+            temp_tmp = obj->Q[b_temp_tmp + 300];
             c_temp_tmp = obj->Q[b_temp_tmp];
-            obj->Q[b_temp_tmp + 240] = c * temp_tmp - s * c_temp_tmp;
+            obj->Q[b_temp_tmp + 300] = c * temp_tmp - s * c_temp_tmp;
             obj->Q[b_temp_tmp] = c * c_temp_tmp + s * temp_tmp;
           }
         }
@@ -97,16 +97,16 @@ void deleteColMoveEnd(g_struct_T *obj, int idx)
       }
       b_i = idx + 1;
       for (k = b_i; k <= endIdx; k++) {
-        u0 = 240 * (k - 1);
+        u0 = 300 * (k - 1);
         i = k + u0;
         temp_tmp = obj->QR[i];
         internal::blas::xrotg(&obj->QR[(k + u0) - 1], &temp_tmp, &c, &s);
         obj->QR[i] = temp_tmp;
-        QRk0 = k * 241;
+        QRk0 = k * 301;
         n = obj->ncols - k;
         if (n >= 1) {
           for (b_k = 0; b_k < n; b_k++) {
-            b_temp_tmp = QRk0 + b_k * 240;
+            b_temp_tmp = QRk0 + b_k * 300;
             temp_tmp = obj->QR[b_temp_tmp];
             c_temp_tmp = obj->QR[b_temp_tmp - 1];
             obj->QR[b_temp_tmp] = c * temp_tmp - s * c_temp_tmp;
@@ -117,9 +117,9 @@ void deleteColMoveEnd(g_struct_T *obj, int idx)
         if (obj->mrows >= 1) {
           for (b_k = 0; b_k < n; b_k++) {
             b_temp_tmp = u0 + b_k;
-            temp_tmp = obj->Q[b_temp_tmp + 240];
+            temp_tmp = obj->Q[b_temp_tmp + 300];
             c_temp_tmp = obj->Q[b_temp_tmp];
-            obj->Q[b_temp_tmp + 240] = c * temp_tmp - s * c_temp_tmp;
+            obj->Q[b_temp_tmp + 300] = c * temp_tmp - s * c_temp_tmp;
             obj->Q[b_temp_tmp] = c * c_temp_tmp + s * temp_tmp;
           }
         }

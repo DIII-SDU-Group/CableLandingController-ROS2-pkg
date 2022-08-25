@@ -21,8 +21,8 @@ namespace pos_MPC {
 namespace coder {
 namespace internal {
 namespace reflapack {
-void xzlarf(int m, int n, int iv0, double tau, double C[134640], int ic0,
-            double work[561]);
+void xzlarf(int m, int n, int iv0, double tau, double C[144300], int ic0,
+            double work[481]);
 
 }
 } // namespace internal

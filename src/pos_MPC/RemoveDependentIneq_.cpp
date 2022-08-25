@@ -10,7 +10,7 @@
 
 // Include files
 #include "RemoveDependentIneq_.h"
-#include "PositionMPCStepFunction_internal_types.h"
+#include "MPCStepFunction_internal_types.h"
 #include "countsort.h"
 #include "rt_nonfinite.h"
 #include "xgeqp3.h"
@@ -24,8 +24,8 @@ namespace optim {
 namespace coder {
 namespace qpactiveset {
 namespace initialize {
-void RemoveDependentIneq_(d_struct_T *workingset, g_struct_T *qrmanager,
-                          f_struct_T *memspace, double tolfactor)
+void RemoveDependentIneq_(g_struct_T *workingset, f_struct_T *qrmanager,
+                          e_struct_T *memspace, double tolfactor)
 {
   int nDepIneq;
   int nFixedConstr;
@@ -53,8 +53,8 @@ void RemoveDependentIneq_(d_struct_T *workingset, g_struct_T *qrmanager,
                   ((nDepIneq - idx_col) + 1) * sizeof(int));
     }
     for (idx_col = 0; idx_col < nDepIneq; idx_col++) {
-      iy0 = 240 * idx_col;
-      idxDiag = 161 * idx_col;
+      iy0 = 300 * idx_col;
+      idxDiag = 181 * idx_col;
       for (k = 0; k < nVar_tmp_tmp; k++) {
         qrmanager->QR[iy0 + k] = workingset->ATwset[idxDiag + k];
       }
@@ -83,13 +83,13 @@ void RemoveDependentIneq_(d_struct_T *workingset, g_struct_T *qrmanager,
       memspace->workspace_int[nDepIneq - 1] = qrmanager->jpvt[idx];
     }
     if (idx + 1 <= workingset->nVar) {
-      idxDiag = idx + 240 * idx;
+      idxDiag = idx + 300 * idx;
       while ((idx + 1 > nFixedConstr) &&
              (std::abs(qrmanager->QR[idxDiag]) < tol)) {
         nDepIneq++;
         memspace->workspace_int[nDepIneq - 1] = qrmanager->jpvt[idx];
         idx--;
-        idxDiag -= 241;
+        idxDiag -= 301;
       }
     }
     utils::countsort(memspace->workspace_int, nDepIneq,
@@ -106,8 +106,8 @@ void RemoveDependentIneq_(d_struct_T *workingset, g_struct_T *qrmanager,
           workingset->Wlocalidx[workingset->nActiveConstr - 1];
       idx_col = workingset->nVar;
       for (k = 0; k < idx_col; k++) {
-        workingset->ATwset[k + 161 * iy0] =
-            workingset->ATwset[k + 161 * (workingset->nActiveConstr - 1)];
+        workingset->ATwset[k + 181 * iy0] =
+            workingset->ATwset[k + 181 * (workingset->nActiveConstr - 1)];
       }
       workingset->bwset[iy0] = workingset->bwset[workingset->nActiveConstr - 1];
       workingset->nActiveConstr--;

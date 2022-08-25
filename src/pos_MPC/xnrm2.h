@@ -21,9 +21,9 @@ namespace pos_MPC {
 namespace coder {
 namespace internal {
 namespace blas {
-double xnrm2(int n, const double x[161]);
+double xnrm2(int n, const double x[181]);
 
-double xnrm2(int n, const double x[134640], int ix0);
+double xnrm2(int n, const double x[144300], int ix0);
 
 } // namespace blas
 } // namespace internal

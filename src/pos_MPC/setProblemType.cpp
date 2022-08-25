@@ -10,7 +10,7 @@
 
 // Include files
 #include "setProblemType.h"
-#include "PositionMPCStepFunction_internal_types.h"
+#include "MPCStepFunction_internal_types.h"
 #include "modifyOverheadPhaseOne_.h"
 #include "rt_nonfinite.h"
 #include <cstring>
@@ -22,12 +22,12 @@ namespace optim {
 namespace coder {
 namespace qpactiveset {
 namespace WorkingSet {
-void setProblemType(d_struct_T *obj, int PROBLEM_TYPE)
+void setProblemType(g_struct_T *obj, int PROBLEM_TYPE)
 {
   switch (PROBLEM_TYPE) {
   case 3: {
     int i;
-    obj->nVar = 160;
+    obj->nVar = 180;
     obj->mConstr = obj->mConstrOrig;
     if (obj->nWConstr[4] > 0) {
       i = obj->sizesNormal[4];
@@ -45,7 +45,7 @@ void setProblemType(d_struct_T *obj, int PROBLEM_TYPE)
   } break;
   case 1: {
     int i;
-    obj->nVar = 161;
+    obj->nVar = 181;
     obj->mConstr = obj->mConstrOrig + 1;
     for (i = 0; i < 5; i++) {
       obj->sizes[i] = obj->sizesPhaseOne[i];
@@ -57,73 +57,60 @@ void setProblemType(d_struct_T *obj, int PROBLEM_TYPE)
   } break;
   case 2: {
     int i;
-    obj->nVar = 160;
-    obj->mConstr = 560;
+    obj->nVar = 180;
+    obj->mConstr = 480;
     for (i = 0; i < 5; i++) {
       obj->sizes[i] = obj->sizesRegularized[i];
     }
     if (obj->probType != 4) {
       int colOffsetATw;
       int colOffsetAeq;
-      int colOffsetAineq;
       int i1;
       int idx_col;
-      for (idx_col = 0; idx_col < 160; idx_col++) {
-        colOffsetAineq = 161 * idx_col;
-        i = idx_col + 160;
-        if (161 <= i) {
-          std::memset(&obj->Aineq[colOffsetAineq + 160], 0,
-                      (((i + colOffsetAineq) - colOffsetAineq) + -160) *
+      int idx_lb;
+      for (idx_col = 0; idx_col < 120; idx_col++) {
+        idx_lb = idx_col + 180;
+        colOffsetAeq = 181 * idx_col - 1;
+        colOffsetATw = colOffsetAeq + 181 * (obj->isActiveIdx[1] - 1);
+        if (181 <= idx_lb) {
+          std::memset(&obj->Aeq[colOffsetAeq + 181], 0,
+                      (((idx_lb + colOffsetAeq) - colOffsetAeq) + -180) *
                           sizeof(double));
-        }
-        obj->Aineq[(idx_col + colOffsetAineq) + 160] = -1.0;
-      }
-      for (idx_col = 0; idx_col < 80; idx_col++) {
-        colOffsetAineq = idx_col + 320;
-        colOffsetAeq = 161 * idx_col - 1;
-        colOffsetATw = colOffsetAeq + 161 * (obj->isActiveIdx[1] - 1);
-        std::memset(&obj->Aeq[colOffsetAeq + 161], 0, 160U * sizeof(double));
-        std::memset(&obj->ATwset[colOffsetATw + 161], 0, 160U * sizeof(double));
-        if (321 <= colOffsetAineq) {
-          std::memset(
-              &obj->Aeq[colOffsetAeq + 321], 0,
-              (((colOffsetAineq + colOffsetAeq) - colOffsetAeq) + -320) *
-                  sizeof(double));
-          std::memset(
-              &obj->ATwset[colOffsetATw + 321], 0,
-              (((colOffsetAineq + colOffsetATw) - colOffsetATw) + -320) *
-                  sizeof(double));
+          std::memset(&obj->ATwset[colOffsetATw + 181], 0,
+                      (((idx_lb + colOffsetATw) - colOffsetATw) + -180) *
+                          sizeof(double));
         }
         i = idx_col + colOffsetAeq;
-        obj->Aeq[i + 321] = -1.0;
-        obj->ATwset[(idx_col + colOffsetATw) + 321] = -1.0;
-        i1 = idx_col + 322;
-        if (i1 <= 400) {
-          std::memset(&obj->Aeq[i1 + colOffsetAeq], 0,
-                      (((colOffsetAeq - i1) - colOffsetAeq) + 401) *
+        obj->Aeq[i + 181] = -1.0;
+        i1 = idx_col + colOffsetATw;
+        obj->ATwset[i1 + 181] = -1.0;
+        idx_lb = idx_col + 182;
+        if (idx_lb <= 300) {
+          std::memset(&obj->Aeq[idx_lb + colOffsetAeq], 0,
+                      (((colOffsetAeq - idx_lb) - colOffsetAeq) + 301) *
                           sizeof(double));
-          std::memset(&obj->ATwset[i1 + colOffsetATw], 0,
-                      (((colOffsetATw - i1) - colOffsetATw) + 401) *
-                          sizeof(double));
-        }
-        i1 = idx_col + 400;
-        if (401 <= i1) {
-          std::memset(&obj->Aeq[colOffsetAeq + 401], 0,
-                      (((i1 + colOffsetAeq) - colOffsetAeq) + -400) *
-                          sizeof(double));
-          std::memset(&obj->ATwset[colOffsetATw + 401], 0,
-                      (((i1 + colOffsetATw) - colOffsetATw) + -400) *
+          std::memset(&obj->ATwset[idx_lb + colOffsetATw], 0,
+                      (((colOffsetATw - idx_lb) - colOffsetATw) + 301) *
                           sizeof(double));
         }
-        obj->Aeq[i + 401] = 1.0;
-        obj->ATwset[(idx_col + colOffsetATw) + 401] = 1.0;
+        idx_lb = idx_col + 300;
+        if (301 <= idx_lb) {
+          std::memset(&obj->Aeq[colOffsetAeq + 301], 0,
+                      (((idx_lb + colOffsetAeq) - colOffsetAeq) + -300) *
+                          sizeof(double));
+          std::memset(&obj->ATwset[colOffsetATw + 301], 0,
+                      (((idx_lb + colOffsetATw) - colOffsetATw) + -300) *
+                          sizeof(double));
+        }
+        obj->Aeq[i + 301] = 1.0;
+        obj->ATwset[i1 + 301] = 1.0;
       }
-      colOffsetAineq = 160;
+      idx_lb = 180;
       i = obj->sizesNormal[3] + 1;
       i1 = obj->sizesRegularized[3];
       for (colOffsetAeq = i; colOffsetAeq <= i1; colOffsetAeq++) {
-        colOffsetAineq++;
-        obj->indexLB[colOffsetAeq - 1] = colOffsetAineq;
+        idx_lb++;
+        obj->indexLB[colOffsetAeq - 1] = idx_lb;
       }
       if (obj->nWConstr[4] > 0) {
         i = obj->sizesRegularized[4];
@@ -138,25 +125,25 @@ void setProblemType(d_struct_T *obj, int PROBLEM_TYPE)
         std::memset(&obj->isActiveConstr[i + -1], 0,
                     ((i1 - i) + 1) * sizeof(boolean_T));
       }
-      obj->lb[160] = 0.0;
-      colOffsetAineq = obj->isActiveIdx[2];
+      obj->lb[180] = 0.0;
+      idx_lb = obj->isActiveIdx[2];
       i = obj->nActiveConstr;
-      for (idx_col = colOffsetAineq; idx_col <= i; idx_col++) {
-        colOffsetATw = 161 * (idx_col - 1) - 1;
+      for (idx_col = idx_lb; idx_col <= i; idx_col++) {
+        colOffsetATw = 181 * (idx_col - 1) - 1;
         switch (obj->Wid[idx_col - 1]) {
         case 3:
-          i1 = obj->Wlocalidx[idx_col - 1] + 159;
-          if (161 <= i1) {
-            std::memset(&obj->ATwset[colOffsetATw + 161], 0,
-                        (((i1 + colOffsetATw) - colOffsetATw) + -160) *
+          i1 = obj->Wlocalidx[idx_col - 1] + 179;
+          if (181 <= i1) {
+            std::memset(&obj->ATwset[colOffsetATw + 181], 0,
+                        (((i1 + colOffsetATw) - colOffsetATw) + -180) *
                             sizeof(double));
           }
-          obj->ATwset[(obj->Wlocalidx[idx_col - 1] + colOffsetATw) + 160] =
+          obj->ATwset[(obj->Wlocalidx[idx_col - 1] + colOffsetATw) + 180] =
               -1.0;
-          i1 = obj->Wlocalidx[idx_col - 1] + 161;
-          if (i1 <= 160) {
+          i1 = obj->Wlocalidx[idx_col - 1] + 181;
+          if (i1 <= 180) {
             std::memset(&obj->ATwset[i1 + colOffsetATw], 0,
-                        (((colOffsetATw - i1) - colOffsetATw) + 161) *
+                        (((colOffsetATw - i1) - colOffsetATw) + 181) *
                             sizeof(double));
           }
           break;
@@ -169,8 +156,8 @@ void setProblemType(d_struct_T *obj, int PROBLEM_TYPE)
   } break;
   default: {
     int i;
-    obj->nVar = 161;
-    obj->mConstr = 561;
+    obj->nVar = 181;
+    obj->mConstr = 481;
     for (i = 0; i < 5; i++) {
       obj->sizes[i] = obj->sizesRegPhaseOne[i];
     }

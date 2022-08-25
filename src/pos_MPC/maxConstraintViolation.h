@@ -18,7 +18,7 @@
 
 // Type Declarations
 namespace pos_MPC {
-struct d_struct_T;
+struct g_struct_T;
 
 }
 
@@ -29,11 +29,9 @@ namespace optim {
 namespace coder {
 namespace qpactiveset {
 namespace WorkingSet {
-double b_maxConstraintViolation(d_struct_T *obj, const double x[161]);
+double maxConstraintViolation(g_struct_T *obj, const double x[181]);
 
-double maxConstraintViolation(d_struct_T *obj, const double x[90321]);
-
-} // namespace WorkingSet
+}
 } // namespace qpactiveset
 } // namespace coder
 } // namespace optim

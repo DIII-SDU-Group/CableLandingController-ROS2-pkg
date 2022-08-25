@@ -22,38 +22,38 @@ namespace pos_MPC {
 namespace coder {
 namespace internal {
 namespace reflapack {
-void qrf(double b_A[134640], int m, int n, int nfxd, double tau[240])
+void qrf(double A[144300], int m, int n, int nfxd, double tau[300])
 {
-  double work[561];
+  double work[481];
   double atmp;
-  std::memset(&work[0], 0, 561U * sizeof(double));
+  std::memset(&work[0], 0, 481U * sizeof(double));
   for (int i{0}; i < nfxd; i++) {
     int ii;
     int mmi;
-    ii = i * 240 + i;
+    ii = i * 300 + i;
     mmi = m - i;
     if (i + 1 < m) {
-      atmp = b_A[ii];
-      tau[i] = xzlarfg(mmi, &atmp, b_A, ii + 2);
-      b_A[ii] = atmp;
+      atmp = A[ii];
+      tau[i] = xzlarfg(mmi, &atmp, A, ii + 2);
+      A[ii] = atmp;
     } else {
       tau[i] = 0.0;
     }
     if (i + 1 < n) {
-      atmp = b_A[ii];
-      b_A[ii] = 1.0;
-      xzlarf(mmi, (n - i) - 1, ii + 1, tau[i], b_A, ii + 241, work);
-      b_A[ii] = atmp;
+      atmp = A[ii];
+      A[ii] = 1.0;
+      xzlarf(mmi, (n - i) - 1, ii + 1, tau[i], A, ii + 301, work);
+      A[ii] = atmp;
     }
   }
 }
 
-void qrpf(double b_A[134640], int m, int n, int nfxd, double tau[240],
-          int jpvt[561])
+void qrpf(double A[144300], int m, int n, int nfxd, double tau[300],
+          int jpvt[481])
 {
-  double vn1[561];
-  double vn2[561];
-  double work[561];
+  double vn1[481];
+  double vn2[481];
+  double work[481];
   double smax;
   int i;
   int j;
@@ -63,12 +63,12 @@ void qrpf(double b_A[134640], int m, int n, int nfxd, double tau[240],
   } else {
     minmn = n;
   }
-  std::memset(&work[0], 0, 561U * sizeof(double));
-  std::memset(&vn1[0], 0, 561U * sizeof(double));
-  std::memset(&vn2[0], 0, 561U * sizeof(double));
+  std::memset(&work[0], 0, 481U * sizeof(double));
+  std::memset(&vn1[0], 0, 481U * sizeof(double));
+  std::memset(&vn2[0], 0, 481U * sizeof(double));
   i = nfxd + 1;
   for (j = i; j <= n; j++) {
-    smax = blas::xnrm2(m - nfxd, b_A, (nfxd + (j - 1) * 240) + 1);
+    smax = blas::xnrm2(m - nfxd, A, (nfxd + (j - 1) * 300) + 1);
     vn1[j - 1] = smax;
     vn2[j - 1] = smax;
   }
@@ -83,7 +83,7 @@ void qrpf(double b_A[134640], int m, int n, int nfxd, double tau[240],
     int nmi;
     int pvt;
     ip1 = b_i + 1;
-    ii_tmp = (b_i - 1) * 240;
+    ii_tmp = (b_i - 1) * 300;
     ii = (ii_tmp + b_i) - 1;
     nmi = (n - b_i) + 1;
     mmi = m - b_i;
@@ -104,14 +104,14 @@ void qrpf(double b_A[134640], int m, int n, int nfxd, double tau[240],
     }
     pvt = b_i + ix;
     if (pvt + 1 != b_i) {
-      ix = pvt * 240;
+      ix = pvt * 300;
       for (k = 0; k < m; k++) {
         int i1;
         j = ix + k;
-        smax = b_A[j];
+        smax = A[j];
         i1 = ii_tmp + k;
-        b_A[j] = b_A[i1];
-        b_A[i1] = smax;
+        A[j] = A[i1];
+        A[i1] = smax;
       }
       ix = jpvt[pvt];
       jpvt[pvt] = jpvt[b_i - 1];
@@ -120,24 +120,24 @@ void qrpf(double b_A[134640], int m, int n, int nfxd, double tau[240],
       vn2[pvt] = vn2[b_i - 1];
     }
     if (b_i < m) {
-      smax = b_A[ii];
-      tau[b_i - 1] = xzlarfg(mmi + 1, &smax, b_A, ii + 2);
-      b_A[ii] = smax;
+      smax = A[ii];
+      tau[b_i - 1] = xzlarfg(mmi + 1, &smax, A, ii + 2);
+      A[ii] = smax;
     } else {
       tau[b_i - 1] = 0.0;
     }
     if (b_i < n) {
-      smax = b_A[ii];
-      b_A[ii] = 1.0;
-      xzlarf(mmi + 1, nmi - 1, ii + 1, tau[b_i - 1], b_A, ii + 241, work);
-      b_A[ii] = smax;
+      smax = A[ii];
+      A[ii] = 1.0;
+      xzlarf(mmi + 1, nmi - 1, ii + 1, tau[b_i - 1], A, ii + 301, work);
+      A[ii] = smax;
     }
     for (j = ip1; j <= n; j++) {
-      ix = b_i + (j - 1) * 240;
+      ix = b_i + (j - 1) * 300;
       smax = vn1[j - 1];
       if (smax != 0.0) {
         double temp2;
-        s = std::abs(b_A[ix - 1]) / smax;
+        s = std::abs(A[ix - 1]) / smax;
         s = 1.0 - s * s;
         if (s < 0.0) {
           s = 0.0;
@@ -146,7 +146,7 @@ void qrpf(double b_A[134640], int m, int n, int nfxd, double tau[240],
         temp2 = s * (temp2 * temp2);
         if (temp2 <= 1.4901161193847656E-8) {
           if (b_i < m) {
-            smax = blas::xnrm2(mmi, b_A, ix + 1);
+            smax = blas::xnrm2(mmi, A, ix + 1);
             vn1[j - 1] = smax;
             vn2[j - 1] = smax;
           } else {

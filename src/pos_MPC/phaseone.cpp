@@ -10,8 +10,8 @@
 
 // Include files
 #include "phaseone.h"
-#include "PositionMPCStepFunction_data.h"
-#include "PositionMPCStepFunction_internal_types.h"
+#include "MPCStepFunction_data.h"
+#include "MPCStepFunction_internal_types.h"
 #include "computeFval.h"
 #include "iterate.h"
 #include "rt_nonfinite.h"
@@ -24,26 +24,25 @@ namespace coder {
 namespace optim {
 namespace coder {
 namespace qpactiveset {
-void phaseone(const double H[25600], const double f[160], struct_T *solution,
-              f_struct_T *memspace, d_struct_T *workingset,
-              g_struct_T *qrmanager, c_struct_T *cholmanager,
-              const e_struct_T *runTimeOptions, b_struct_T *objective,
+void phaseone(const double H[32400], const double f[180], struct_T *solution,
+              e_struct_T *memspace, g_struct_T *workingset,
+              f_struct_T *qrmanager, c_struct_T *cholmanager,
+              const d_struct_T *runTimeOptions, b_struct_T *objective,
               h_struct_T *options)
 {
   static const char t0_SolverName[8]{'q', 'u', 'a', 'd', 'p', 'r', 'o', 'g'};
   static const char t0_FiniteDifferenceType[7]{'f', 'o', 'r', 'w',
                                                'a', 'r', 'd'};
   static const char t0_Display[5]{'f', 'i', 'n', 'a', 'l'};
-  int PHASEONE;
-  int PROBTYPE_ORIG;
+  int idx;
   int idxEndIneq;
   int idxStartIneq;
   int idx_global;
   int nVar_tmp_tmp;
   options->InitDamping = 0.01;
-  for (idxEndIneq = 0; idxEndIneq < 7; idxEndIneq++) {
-    options->FiniteDifferenceType[idxEndIneq] =
-        t0_FiniteDifferenceType[idxEndIneq];
+  for (idx_global = 0; idx_global < 7; idx_global++) {
+    options->FiniteDifferenceType[idx_global] =
+        t0_FiniteDifferenceType[idx_global];
   }
   options->SpecifyObjectiveGradient = false;
   options->ScaleProblem = false;
@@ -54,15 +53,15 @@ void phaseone(const double H[25600], const double f[160], struct_T *solution,
   options->MaxFunctionEvaluations = -1.0;
   options->IterDisplayQP = false;
   options->PricingTolerance = 0.0;
-  for (idxEndIneq = 0; idxEndIneq < 10; idxEndIneq++) {
-    options->Algorithm[idxEndIneq] = cv[idxEndIneq];
+  for (idx_global = 0; idx_global < 10; idx_global++) {
+    options->Algorithm[idx_global] = cv[idx_global];
   }
   options->ConstraintTolerance = 1.0E-8;
   options->OptimalityTolerance = 0.999;
-  options->MaxIterations = 10.0;
-  options->FunctionTolerance = rtInf;
-  for (idxEndIneq = 0; idxEndIneq < 8; idxEndIneq++) {
-    options->SolverName[idxEndIneq] = t0_SolverName[idxEndIneq];
+  options->MaxIterations = 100.0;
+  options->FunctionTolerance = 1.0E+9;
+  for (idx_global = 0; idx_global < 8; idx_global++) {
+    options->SolverName[idx_global] = t0_SolverName[idx_global];
   }
   options->CheckGradients = false;
   options->Diagnostics[0] = 'o';
@@ -70,8 +69,8 @@ void phaseone(const double H[25600], const double f[160], struct_T *solution,
   options->Diagnostics[2] = 'f';
   options->DiffMaxChange = rtInf;
   options->DiffMinChange = 0.0;
-  for (idxEndIneq = 0; idxEndIneq < 5; idxEndIneq++) {
-    options->Display[idxEndIneq] = t0_Display[idxEndIneq];
+  for (idx_global = 0; idx_global < 5; idx_global++) {
+    options->Display[idx_global] = t0_Display[idx_global];
   }
   options->FunValCheck[0] = 'o';
   options->FunValCheck[1] = 'f';
@@ -83,14 +82,8 @@ void phaseone(const double H[25600], const double f[160], struct_T *solution,
   options->LinearSolver[3] = 'o';
   options->SubproblemAlgorithm[0] = 'c';
   options->SubproblemAlgorithm[1] = 'g';
-  PROBTYPE_ORIG = workingset->probType;
   nVar_tmp_tmp = workingset->nVar;
-  solution->xstar[160] = solution->maxConstr + 1.0;
-  if (workingset->probType == 3) {
-    PHASEONE = 1;
-  } else {
-    PHASEONE = 4;
-  }
+  solution->xstar[180] = solution->maxConstr + 1.0;
   idxStartIneq = (workingset->nWConstr[0] + workingset->nWConstr[1]) + 1;
   idxEndIneq = workingset->nActiveConstr;
   for (idx_global = idxStartIneq; idx_global <= idxEndIneq; idx_global++) {
@@ -103,17 +96,17 @@ void phaseone(const double H[25600], const double f[160], struct_T *solution,
   workingset->nWConstr[3] = 0;
   workingset->nWConstr[4] = 0;
   workingset->nActiveConstr = workingset->nWConstr[0] + workingset->nWConstr[1];
-  WorkingSet::setProblemType(workingset, PHASEONE);
-  std::memset(&objective->grad[0], 0, 161U * sizeof(double));
-  std::memset(&objective->Hx[0], 0, 160U * sizeof(double));
-  objective->maxVar = 161;
+  WorkingSet::setProblemType(workingset, 1);
+  std::memset(&objective->grad[0], 0, 181U * sizeof(double));
+  std::memset(&objective->Hx[0], 0, 180U * sizeof(double));
+  objective->maxVar = 181;
   objective->beta = 0.0;
   objective->rho = 0.0;
   objective->prev_objtype = 3;
-  objective->prev_nvar = 160;
+  objective->prev_nvar = 180;
   objective->prev_hasLinear = true;
   objective->objtype = 5;
-  objective->nvar = 161;
+  objective->nvar = 181;
   objective->gammaScalar = 1.0;
   objective->hasLinear = true;
   options->ObjectiveLimit = 1.0E-8 * runTimeOptions->ConstrRelTolFactor;
@@ -128,61 +121,60 @@ void phaseone(const double H[25600], const double f[160], struct_T *solution,
           ->isActiveConstr[(workingset->isActiveIdx[3] + workingset->sizes[3]) -
                            2]) {
     boolean_T exitg1;
-    idx_global = workingset->sizes[0] + 80;
+    idx = workingset->sizes[0] + 120;
     exitg1 = false;
-    while ((!exitg1) && (idx_global + 1 <= workingset->nActiveConstr)) {
-      if ((workingset->Wid[idx_global] == 4) &&
-          (workingset->Wlocalidx[idx_global] == workingset->sizes[3])) {
-        idxStartIneq = workingset->Wid[idx_global] - 1;
+    while ((!exitg1) && (idx + 1 <= workingset->nActiveConstr)) {
+      if ((workingset->Wid[idx] == 4) &&
+          (workingset->Wlocalidx[idx] == workingset->sizes[3])) {
+        idxEndIneq = workingset->Wid[idx] - 1;
         workingset->isActiveConstr
-            [(workingset->isActiveIdx[workingset->Wid[idx_global] - 1] +
-              workingset->Wlocalidx[idx_global]) -
+            [(workingset->isActiveIdx[workingset->Wid[idx] - 1] +
+              workingset->Wlocalidx[idx]) -
              2] = false;
-        workingset->Wid[idx_global] =
-            workingset->Wid[workingset->nActiveConstr - 1];
-        workingset->Wlocalidx[idx_global] =
+        workingset->Wid[idx] = workingset->Wid[workingset->nActiveConstr - 1];
+        workingset->Wlocalidx[idx] =
             workingset->Wlocalidx[workingset->nActiveConstr - 1];
-        idxEndIneq = workingset->nVar;
-        for (PHASEONE = 0; PHASEONE < idxEndIneq; PHASEONE++) {
-          workingset->ATwset[PHASEONE + 161 * idx_global] =
-              workingset
-                  ->ATwset[PHASEONE + 161 * (workingset->nActiveConstr - 1)];
+        idx_global = workingset->nVar;
+        for (idxStartIneq = 0; idxStartIneq < idx_global; idxStartIneq++) {
+          workingset->ATwset[idxStartIneq + 181 * idx] =
+              workingset->ATwset[idxStartIneq +
+                                 181 * (workingset->nActiveConstr - 1)];
         }
-        workingset->bwset[idx_global] =
+        workingset->bwset[idx] =
             workingset->bwset[workingset->nActiveConstr - 1];
         workingset->nActiveConstr--;
-        workingset->nWConstr[idxStartIneq]--;
+        workingset->nWConstr[idxEndIneq]--;
         exitg1 = true;
       } else {
-        idx_global++;
+        idx++;
       }
     }
   }
-  PHASEONE = workingset->nActiveConstr - 1;
-  while ((PHASEONE + 1 > workingset->sizes[0] + 80) &&
-         (PHASEONE + 1 > nVar_tmp_tmp)) {
-    idxStartIneq = workingset->Wid[PHASEONE] - 1;
+  idxStartIneq = workingset->nActiveConstr - 1;
+  while ((idxStartIneq + 1 > workingset->sizes[0] + 120) &&
+         (idxStartIneq + 1 > nVar_tmp_tmp)) {
+    idxEndIneq = workingset->Wid[idxStartIneq] - 1;
     workingset->isActiveConstr
-        [(workingset->isActiveIdx[workingset->Wid[PHASEONE] - 1] +
-          workingset->Wlocalidx[PHASEONE]) -
+        [(workingset->isActiveIdx[workingset->Wid[idxStartIneq] - 1] +
+          workingset->Wlocalidx[idxStartIneq]) -
          2] = false;
-    workingset->Wid[PHASEONE] = workingset->Wid[workingset->nActiveConstr - 1];
-    workingset->Wlocalidx[PHASEONE] =
+    workingset->Wid[idxStartIneq] =
+        workingset->Wid[workingset->nActiveConstr - 1];
+    workingset->Wlocalidx[idxStartIneq] =
         workingset->Wlocalidx[workingset->nActiveConstr - 1];
-    idxEndIneq = workingset->nVar;
-    for (idx_global = 0; idx_global < idxEndIneq; idx_global++) {
-      workingset->ATwset[idx_global + 161 * PHASEONE] =
-          workingset
-              ->ATwset[idx_global + 161 * (workingset->nActiveConstr - 1)];
+    idx_global = workingset->nVar;
+    for (idx = 0; idx < idx_global; idx++) {
+      workingset->ATwset[idx + 181 * idxStartIneq] =
+          workingset->ATwset[idx + 181 * (workingset->nActiveConstr - 1)];
     }
-    workingset->bwset[PHASEONE] =
+    workingset->bwset[idxStartIneq] =
         workingset->bwset[workingset->nActiveConstr - 1];
     workingset->nActiveConstr--;
-    workingset->nWConstr[idxStartIneq]--;
-    PHASEONE--;
+    workingset->nWConstr[idxEndIneq]--;
+    idxStartIneq--;
   }
-  solution->maxConstr = solution->xstar[160];
-  WorkingSet::setProblemType(workingset, PROBTYPE_ORIG);
+  solution->maxConstr = solution->xstar[180];
+  WorkingSet::setProblemType(workingset, 3);
   objective->objtype = objective->prev_objtype;
   objective->nvar = objective->prev_nvar;
   objective->hasLinear = objective->prev_hasLinear;
@@ -190,11 +182,11 @@ void phaseone(const double H[25600], const double f[160], struct_T *solution,
   options->StepTolerance = 0.001;
 }
 
-void phaseone(const double H[25600], const double f[160], struct_T *solution,
-              f_struct_T *memspace, d_struct_T *workingset,
-              g_struct_T *qrmanager, c_struct_T *cholmanager,
+void phaseone(const double H[32400], const double f[180], struct_T *solution,
+              e_struct_T *memspace, g_struct_T *workingset,
+              f_struct_T *qrmanager, c_struct_T *cholmanager,
               b_struct_T *objective, h_struct_T *options,
-              const e_struct_T *runTimeOptions)
+              const d_struct_T *runTimeOptions)
 {
   int PHASEONE;
   int PROBTYPE_ORIG;
@@ -204,7 +196,7 @@ void phaseone(const double H[25600], const double f[160], struct_T *solution,
   int nVar_tmp_tmp;
   PROBTYPE_ORIG = workingset->probType;
   nVar_tmp_tmp = workingset->nVar;
-  solution->xstar[160] = solution->maxConstr + 1.0;
+  solution->xstar[180] = solution->maxConstr + 1.0;
   if (workingset->probType == 3) {
     PHASEONE = 1;
   } else {
@@ -227,7 +219,7 @@ void phaseone(const double H[25600], const double f[160], struct_T *solution,
   objective->prev_nvar = objective->nvar;
   objective->prev_hasLinear = objective->hasLinear;
   objective->objtype = 5;
-  objective->nvar = 161;
+  objective->nvar = 181;
   objective->gammaScalar = 1.0;
   objective->hasLinear = true;
   options->ObjectiveLimit = 1.0E-8 * runTimeOptions->ConstrRelTolFactor;
@@ -243,7 +235,7 @@ void phaseone(const double H[25600], const double f[160], struct_T *solution,
           ->isActiveConstr[(workingset->isActiveIdx[3] + workingset->sizes[3]) -
                            2]) {
     boolean_T exitg1;
-    idx_global = workingset->sizes[0] + 80;
+    idx_global = workingset->sizes[0] + 120;
     exitg1 = false;
     while ((!exitg1) && (idx_global + 1 <= workingset->nActiveConstr)) {
       if ((workingset->Wid[idx_global] == 4) &&
@@ -259,9 +251,9 @@ void phaseone(const double H[25600], const double f[160], struct_T *solution,
             workingset->Wlocalidx[workingset->nActiveConstr - 1];
         idxEndIneq = workingset->nVar;
         for (PHASEONE = 0; PHASEONE < idxEndIneq; PHASEONE++) {
-          workingset->ATwset[PHASEONE + 161 * idx_global] =
+          workingset->ATwset[PHASEONE + 181 * idx_global] =
               workingset
-                  ->ATwset[PHASEONE + 161 * (workingset->nActiveConstr - 1)];
+                  ->ATwset[PHASEONE + 181 * (workingset->nActiveConstr - 1)];
         }
         workingset->bwset[idx_global] =
             workingset->bwset[workingset->nActiveConstr - 1];
@@ -274,7 +266,7 @@ void phaseone(const double H[25600], const double f[160], struct_T *solution,
     }
   }
   PHASEONE = workingset->nActiveConstr - 1;
-  while ((PHASEONE + 1 > workingset->sizes[0] + 80) &&
+  while ((PHASEONE + 1 > workingset->sizes[0] + 120) &&
          (PHASEONE + 1 > nVar_tmp_tmp)) {
     idxStartIneq = workingset->Wid[PHASEONE] - 1;
     workingset->isActiveConstr
@@ -286,9 +278,9 @@ void phaseone(const double H[25600], const double f[160], struct_T *solution,
         workingset->Wlocalidx[workingset->nActiveConstr - 1];
     idxEndIneq = workingset->nVar;
     for (idx_global = 0; idx_global < idxEndIneq; idx_global++) {
-      workingset->ATwset[idx_global + 161 * PHASEONE] =
+      workingset->ATwset[idx_global + 181 * PHASEONE] =
           workingset
-              ->ATwset[idx_global + 161 * (workingset->nActiveConstr - 1)];
+              ->ATwset[idx_global + 181 * (workingset->nActiveConstr - 1)];
     }
     workingset->bwset[PHASEONE] =
         workingset->bwset[workingset->nActiveConstr - 1];
@@ -296,7 +288,7 @@ void phaseone(const double H[25600], const double f[160], struct_T *solution,
     workingset->nWConstr[idxStartIneq]--;
     PHASEONE--;
   }
-  solution->maxConstr = solution->xstar[160];
+  solution->maxConstr = solution->xstar[180];
   WorkingSet::setProblemType(workingset, PROBTYPE_ORIG);
   objective->objtype = objective->prev_objtype;
   objective->nvar = objective->prev_nvar;

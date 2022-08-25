@@ -19,11 +19,10 @@
 // Function Declarations
 namespace pos_MPC {
 namespace coder {
-void quadprog(const double H[25600], const double f[160],
-              const double Aineq[25600], const double bineq[160],
-              const double Aeq[12800], const double b_beq[80],
-              const double lb[160], const double ub[160], const double x0[160],
-              double x[160]);
+void quadprog(const double H[32400], const double f[180],
+              const double Aeq[21600], const double b_beq[120],
+              const double lb[180], const double ub[180], const double x0[180],
+              double x[180]);
 
 }
 } // namespace pos_MPC

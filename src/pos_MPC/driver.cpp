@@ -10,8 +10,8 @@
 
 // Include files
 #include "driver.h"
-#include "PositionMPCStepFunction_data.h"
-#include "PositionMPCStepFunction_internal_types.h"
+#include "MPCStepFunction_data.h"
+#include "MPCStepFunction_internal_types.h"
 #include "PresolveWorkingSet.h"
 #include "computeFirstOrderOpt.h"
 #include "computeFval.h"
@@ -29,9 +29,9 @@ namespace coder {
 namespace optim {
 namespace coder {
 namespace qpactiveset {
-void driver(const double H[25600], const double f[160], struct_T *solution,
-            f_struct_T *memspace, d_struct_T *workingset, g_struct_T *qrmanager,
-            c_struct_T *cholmanager, e_struct_T runTimeOptions,
+void driver(const double H[32400], const double f[180], struct_T *solution,
+            e_struct_T *memspace, g_struct_T *workingset, f_struct_T *qrmanager,
+            c_struct_T *cholmanager, d_struct_T runTimeOptions,
             b_struct_T *objective)
 {
   static const char b_cv[128]{
@@ -59,11 +59,11 @@ void driver(const double H[25600], const double f[160], struct_T *solution,
   int i;
   int idx;
   int nVar;
-  std::memset(&objective->grad[0], 0, 161U * sizeof(double));
-  std::memset(&objective->Hx[0], 0, 160U * sizeof(double));
+  std::memset(&objective->grad[0], 0, 181U * sizeof(double));
+  std::memset(&objective->Hx[0], 0, 180U * sizeof(double));
   objective->hasLinear = true;
-  objective->nvar = 160;
-  objective->maxVar = 161;
+  objective->nvar = 180;
+  objective->maxVar = 181;
   objective->beta = 0.0;
   objective->rho = 0.0;
   objective->objtype = 3;
@@ -114,8 +114,8 @@ void driver(const double H[25600], const double f[160], struct_T *solution,
   options.ConstraintTolerance = 1.0E-8;
   options.OptimalityTolerance = 0.999;
   options.StepTolerance = 0.001;
-  options.MaxIterations = 10.0;
-  options.FunctionTolerance = rtInf;
+  options.MaxIterations = 100.0;
+  options.FunctionTolerance = 1.0E+9;
   for (i = 0; i < 8; i++) {
     options.SolverName[i] = t1_SolverName[i];
   }
@@ -143,7 +143,7 @@ void driver(const double H[25600], const double f[160], struct_T *solution,
     boolean_T guard1{false};
     solution->iterations = 0;
     solution->maxConstr =
-        WorkingSet::b_maxConstraintViolation(workingset, solution->xstar);
+        WorkingSet::maxConstraintViolation(workingset, solution->xstar);
     maxConstr_new = 1.0E-8 * runTimeOptions.ConstrRelTolFactor;
     guard1 = false;
     if (solution->maxConstr > maxConstr_new) {
@@ -151,9 +151,9 @@ void driver(const double H[25600], const double f[160], struct_T *solution,
                &runTimeOptions, objective, &options);
       if (solution->state != 0) {
         solution->maxConstr =
-            WorkingSet::b_maxConstraintViolation(workingset, solution->xstar);
+            WorkingSet::maxConstraintViolation(workingset, solution->xstar);
         if (solution->maxConstr > maxConstr_new) {
-          std::memset(&solution->lambda[0], 0, 561U * sizeof(double));
+          std::memset(&solution->lambda[0], 0, 481U * sizeof(double));
           solution->fstar = Objective::computeFval(
               objective, memspace->workspace_double, H, f, solution->xstar);
           solution->state = -2;
@@ -165,8 +165,8 @@ void driver(const double H[25600], const double f[160], struct_T *solution,
             }
             initialize::PresolveWorkingSet(solution, memspace, workingset,
                                            qrmanager);
-            maxConstr_new = WorkingSet::b_maxConstraintViolation(
-                workingset, solution->xstar);
+            maxConstr_new =
+                WorkingSet::maxConstraintViolation(workingset, solution->xstar);
             if (maxConstr_new >= solution->maxConstr) {
               solution->maxConstr = maxConstr_new;
               if (0 <= nVar) {
@@ -206,12 +206,12 @@ void driver(const double H[25600], const double f[160], struct_T *solution,
       } while (exitg1 == 0);
       if (b_bool && (solution->state != -6)) {
         solution->maxConstr =
-            WorkingSet::b_maxConstraintViolation(workingset, solution->xstar);
+            WorkingSet::maxConstraintViolation(workingset, solution->xstar);
         parseoutput::computeFirstOrderOpt(
             solution, objective, workingset->nVar, workingset->ATwset,
             workingset->nActiveConstr, memspace->workspace_double);
         runTimeOptions.RemainFeasible = false;
-        while ((solution->iterations < 10) &&
+        while ((solution->iterations < 100) &&
                ((solution->state == -7) ||
                 ((solution->state == 1) &&
                  ((solution->maxConstr >
@@ -230,7 +230,7 @@ void driver(const double H[25600], const double f[160], struct_T *solution,
                   runTimeOptions.ConstrRelTolFactor,
                   runTimeOptions.ProbRelTolFactor, false);
           solution->maxConstr =
-              WorkingSet::b_maxConstraintViolation(workingset, solution->xstar);
+              WorkingSet::maxConstraintViolation(workingset, solution->xstar);
           parseoutput::computeFirstOrderOpt(
               solution, objective, workingset->nVar, workingset->ATwset,
               workingset->nActiveConstr, memspace->workspace_double);

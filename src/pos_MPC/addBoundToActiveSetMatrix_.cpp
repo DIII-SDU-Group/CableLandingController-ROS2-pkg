@@ -10,7 +10,7 @@
 
 // Include files
 #include "addBoundToActiveSetMatrix_.h"
-#include "PositionMPCStepFunction_internal_types.h"
+#include "MPCStepFunction_internal_types.h"
 #include "rt_nonfinite.h"
 #include <cstring>
 
@@ -21,7 +21,7 @@ namespace optim {
 namespace coder {
 namespace qpactiveset {
 namespace WorkingSet {
-void addBoundToActiveSetMatrix_(d_struct_T *obj, int TYPE, int idx_local)
+void addBoundToActiveSetMatrix_(g_struct_T *obj, int TYPE, int idx_local)
 {
   int colOffset;
   int i;
@@ -31,7 +31,7 @@ void addBoundToActiveSetMatrix_(d_struct_T *obj, int TYPE, int idx_local)
   obj->nActiveConstr++;
   obj->Wid[obj->nActiveConstr - 1] = TYPE;
   obj->Wlocalidx[obj->nActiveConstr - 1] = idx_local;
-  colOffset = 161 * (obj->nActiveConstr - 1) - 1;
+  colOffset = 181 * (obj->nActiveConstr - 1) - 1;
   switch (TYPE) {
   case 5:
     idx_bnd_local = obj->indexUB[idx_local - 1];

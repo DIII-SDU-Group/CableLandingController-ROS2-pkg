@@ -10,7 +10,7 @@
 
 // Include files
 #include "computeFval_ReuseHx.h"
-#include "PositionMPCStepFunction_internal_types.h"
+#include "MPCStepFunction_internal_types.h"
 #include "rt_nonfinite.h"
 #include <algorithm>
 
@@ -21,8 +21,8 @@ namespace optim {
 namespace coder {
 namespace qpactiveset {
 namespace Objective {
-double computeFval_ReuseHx(const b_struct_T *obj, double workspace[90321],
-                           const double f[160], const double x[161])
+double computeFval_ReuseHx(const b_struct_T *obj, double workspace[87061],
+                           const double f[180], const double x[181])
 {
   double val;
   switch (obj->objtype) {
@@ -64,12 +64,12 @@ double computeFval_ReuseHx(const b_struct_T *obj, double workspace[90321],
       if (0 <= ixlast - 1) {
         std::copy(&f[0], &f[ixlast], &workspace[0]);
       }
-      ixlast = 159 - obj->nvar;
+      ixlast = 179 - obj->nvar;
       for (k = 0; k <= ixlast; k++) {
         workspace[obj->nvar + k] = 0.0;
       }
       val = 0.0;
-      for (k = 0; k < 160; k++) {
+      for (k = 0; k < 180; k++) {
         workspace[k] += 0.5 * obj->Hx[k];
         val += x[k] * workspace[k];
       }
@@ -77,12 +77,12 @@ double computeFval_ReuseHx(const b_struct_T *obj, double workspace[90321],
       int ixlast;
       int k;
       val = 0.0;
-      for (k = 0; k < 160; k++) {
+      for (k = 0; k < 180; k++) {
         val += x[k] * obj->Hx[k];
       }
       val *= 0.5;
       ixlast = obj->nvar + 1;
-      for (k = ixlast; k < 161; k++) {
+      for (k = ixlast; k < 181; k++) {
         val += x[k - 1] * 0.0;
       }
     }

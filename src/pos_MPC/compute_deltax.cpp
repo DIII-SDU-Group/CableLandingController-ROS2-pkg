@@ -10,8 +10,8 @@
 
 // Include files
 #include "compute_deltax.h"
-#include "PositionMPCStepFunction_internal_types.h"
-#include "PositionMPCStepFunction_rtwutil.h"
+#include "MPCStepFunction_internal_types.h"
+#include "MPCStepFunction_rtwutil.h"
 #include "fullColLDL2_.h"
 #include "partialColLDL3_.h"
 #include "rt_nonfinite.h"
@@ -24,8 +24,8 @@ namespace coder {
 namespace optim {
 namespace coder {
 namespace qpactiveset {
-void compute_deltax(const double H[25600], struct_T *solution,
-                    f_struct_T *memspace, const g_struct_T *qrmanager,
+void compute_deltax(const double H[32400], struct_T *solution,
+                    e_struct_T *memspace, const f_struct_T *qrmanager,
                     c_struct_T *cholmanager, const b_struct_T *objective)
 {
   int mNull_tmp;
@@ -51,7 +51,7 @@ void compute_deltax(const double H[25600], struct_T *solution,
         cholmanager->ndims = qrmanager->mrows;
         for (br = 0; br <= nVar_tmp; br++) {
           A_maxDiag_idx = (nVar_tmp + 1) * br;
-          nVars = 240 * br;
+          nVars = 300 * br;
           for (lastColC = 0; lastColC <= nVar_tmp; lastColC++) {
             cholmanager->FMat[nVars + lastColC] = H[A_maxDiag_idx + lastColC];
           }
@@ -65,7 +65,7 @@ void compute_deltax(const double H[25600], struct_T *solution,
             smax = std::abs(cholmanager->FMat[0]);
             for (lastColC = 2; lastColC <= nVar_tmp + 1; lastColC++) {
               double s;
-              s = std::abs(cholmanager->FMat[(lastColC - 1) * 241]);
+              s = std::abs(cholmanager->FMat[(lastColC - 1) * 301]);
               if (s > smax) {
                 A_maxDiag_idx = lastColC - 1;
                 smax = s;
@@ -74,7 +74,7 @@ void compute_deltax(const double H[25600], struct_T *solution,
           }
         }
         cholmanager->regTol_ = std::fmax(
-            std::abs(cholmanager->FMat[A_maxDiag_idx + 240 * A_maxDiag_idx]) *
+            std::abs(cholmanager->FMat[A_maxDiag_idx + 300 * A_maxDiag_idx]) *
                 2.2204460492503131E-16,
             std::abs(temp));
         if (qrmanager->mrows > 128) {
@@ -82,7 +82,7 @@ void compute_deltax(const double H[25600], struct_T *solution,
           lastColC = 0;
           exitg1 = false;
           while ((!exitg1) && (lastColC < nVar_tmp + 1)) {
-            nVars = 241 * lastColC + 1;
+            nVars = 301 * lastColC + 1;
             A_maxDiag_idx = (nVar_tmp - lastColC) + 1;
             if (lastColC + 48 <= nVar_tmp + 1) {
               DynamicRegCholManager::partialColLDL3_(cholmanager, nVars,
@@ -104,7 +104,7 @@ void compute_deltax(const double H[25600], struct_T *solution,
           do {
             exitg2 = 0;
             if (br <= nVar_tmp) {
-              if (cholmanager->FMat[br + 240 * br] <= 0.0) {
+              if (cholmanager->FMat[br + 300 * br] <= 0.0) {
                 cholmanager->info = -br - 1;
                 exitg2 = 1;
               } else {
@@ -124,7 +124,7 @@ void compute_deltax(const double H[25600], struct_T *solution,
           nVars = cholmanager->ndims - 2;
           if (cholmanager->ndims != 0) {
             for (lastColC = 0; lastColC <= nVars + 1; lastColC++) {
-              A_maxDiag_idx = lastColC + lastColC * 240;
+              A_maxDiag_idx = lastColC + lastColC * 300;
               i = nVars - lastColC;
               for (ar = 0; ar <= i; ar++) {
                 br = (lastColC + ar) + 1;
@@ -136,12 +136,12 @@ void compute_deltax(const double H[25600], struct_T *solution,
           }
           i = cholmanager->ndims;
           for (br = 0; br < i; br++) {
-            solution->searchDir[br] /= cholmanager->FMat[br + 240 * br];
+            solution->searchDir[br] /= cholmanager->FMat[br + 300 * br];
           }
           nVars = cholmanager->ndims;
           if (cholmanager->ndims != 0) {
             for (lastColC = nVars; lastColC >= 1; lastColC--) {
-              A_maxDiag_idx = (lastColC - 1) * 240;
+              A_maxDiag_idx = (lastColC - 1) * 300;
               temp = solution->searchDir[lastColC - 1];
               i = lastColC + 1;
               for (ar = nVars; ar >= i; ar--) {
@@ -156,13 +156,13 @@ void compute_deltax(const double H[25600], struct_T *solution,
     } else {
       int nullStartIdx;
       int nullStartIdx_tmp;
-      nullStartIdx_tmp = 240 * qrmanager->ncols;
+      nullStartIdx_tmp = 300 * qrmanager->ncols;
       nullStartIdx = nullStartIdx_tmp + 1;
       switch (objective->objtype) {
       case 5: {
         for (br = 0; br < mNull_tmp; br++) {
           memspace->workspace_double[br] =
-              -qrmanager->Q[nVar_tmp + 240 * (qrmanager->ncols + br)];
+              -qrmanager->Q[nVar_tmp + 300 * (qrmanager->ncols + br)];
         }
         if (qrmanager->mrows != 0) {
           int i;
@@ -171,9 +171,9 @@ void compute_deltax(const double H[25600], struct_T *solution,
                         (nVar_tmp + 1) * sizeof(double));
           }
           br = 0;
-          i = (nullStartIdx_tmp + 240 * (mNull_tmp - 1)) + 1;
+          i = (nullStartIdx_tmp + 300 * (mNull_tmp - 1)) + 1;
           for (int A_maxDiag_idx{nullStartIdx}; A_maxDiag_idx <= i;
-               A_maxDiag_idx += 240) {
+               A_maxDiag_idx += 300) {
             int i1;
             i1 = A_maxDiag_idx + nVar_tmp;
             for (int nVars{A_maxDiag_idx}; nVars <= i1; nVars++) {
@@ -202,8 +202,8 @@ void compute_deltax(const double H[25600], struct_T *solution,
           nVars = qrmanager->mrows;
           if (qrmanager->mrows != 0) {
             br = nullStartIdx_tmp;
-            lastColC = 561 * (mNull_tmp - 1);
-            for (cr = 0; cr <= lastColC; cr += 561) {
+            lastColC = 481 * (mNull_tmp - 1);
+            for (cr = 0; cr <= lastColC; cr += 481) {
               i = cr + 1;
               i1 = cr + nVars;
               if (i <= i1) {
@@ -211,7 +211,7 @@ void compute_deltax(const double H[25600], struct_T *solution,
                             ((i1 - i) + 1) * sizeof(double));
               }
             }
-            for (cr = 0; cr <= lastColC; cr += 561) {
+            for (cr = 0; cr <= lastColC; cr += 481) {
               ar = -1;
               i = br + 1;
               i1 = br + nVars;
@@ -224,11 +224,11 @@ void compute_deltax(const double H[25600], struct_T *solution,
                 }
                 ar += nVars;
               }
-              br += 240;
+              br += 300;
             }
           }
-          lastColC = 240 * (mNull_tmp - 1);
-          for (cr = 0; cr <= lastColC; cr += 240) {
+          lastColC = 300 * (mNull_tmp - 1);
+          for (cr = 0; cr <= lastColC; cr += 300) {
             i = cr + 1;
             i1 = cr + mNull_tmp;
             if (i <= i1) {
@@ -237,7 +237,7 @@ void compute_deltax(const double H[25600], struct_T *solution,
             }
           }
           br = -1;
-          for (cr = 0; cr <= lastColC; cr += 240) {
+          for (cr = 0; cr <= lastColC; cr += 300) {
             ar = nullStartIdx_tmp;
             i = cr + 1;
             i1 = cr + mNull_tmp;
@@ -248,9 +248,9 @@ void compute_deltax(const double H[25600], struct_T *solution,
                         memspace->workspace_double[(A_maxDiag_idx + br) + 1];
               }
               cholmanager->FMat[ic - 1] += temp;
-              ar += 240;
+              ar += 300;
             }
-            br += 561;
+            br += 481;
           }
         } break;
         }
@@ -262,7 +262,7 @@ void compute_deltax(const double H[25600], struct_T *solution,
           smax = std::abs(cholmanager->FMat[0]);
           for (lastColC = 2; lastColC <= mNull_tmp; lastColC++) {
             double s;
-            s = std::abs(cholmanager->FMat[(lastColC - 1) * 241]);
+            s = std::abs(cholmanager->FMat[(lastColC - 1) * 301]);
             if (s > smax) {
               A_maxDiag_idx = lastColC - 1;
               smax = s;
@@ -270,7 +270,7 @@ void compute_deltax(const double H[25600], struct_T *solution,
           }
         }
         cholmanager->regTol_ = std::fmax(
-            std::abs(cholmanager->FMat[A_maxDiag_idx + 240 * A_maxDiag_idx]) *
+            std::abs(cholmanager->FMat[A_maxDiag_idx + 300 * A_maxDiag_idx]) *
                 2.2204460492503131E-16,
             temp);
         if (mNull_tmp > 128) {
@@ -278,7 +278,7 @@ void compute_deltax(const double H[25600], struct_T *solution,
           lastColC = 0;
           exitg1 = false;
           while ((!exitg1) && (lastColC < mNull_tmp)) {
-            nVars = 241 * lastColC + 1;
+            nVars = 301 * lastColC + 1;
             A_maxDiag_idx = mNull_tmp - lastColC;
             if (lastColC + 48 <= mNull_tmp) {
               DynamicRegCholManager::partialColLDL3_(cholmanager, nVars,
@@ -299,7 +299,7 @@ void compute_deltax(const double H[25600], struct_T *solution,
           do {
             exitg2 = 0;
             if (br <= mNull_tmp - 1) {
-              if (cholmanager->FMat[br + 240 * br] <= 0.0) {
+              if (cholmanager->FMat[br + 300 * br] <= 0.0) {
                 cholmanager->info = -br - 1;
                 exitg2 = 1;
               } else {
@@ -319,9 +319,9 @@ void compute_deltax(const double H[25600], struct_T *solution,
               std::memset(&memspace->workspace_double[0], 0,
                           mNull_tmp * sizeof(double));
             }
-            i = (nullStartIdx_tmp + 240 * (mNull_tmp - 1)) + 1;
+            i = (nullStartIdx_tmp + 300 * (mNull_tmp - 1)) + 1;
             for (A_maxDiag_idx = nullStartIdx; A_maxDiag_idx <= i;
-                 A_maxDiag_idx += 240) {
+                 A_maxDiag_idx += 300) {
               temp = 0.0;
               i1 = A_maxDiag_idx + nVar_tmp;
               for (nVars = A_maxDiag_idx; nVars <= i1; nVars++) {
@@ -329,14 +329,14 @@ void compute_deltax(const double H[25600], struct_T *solution,
                         objective->grad[nVars - A_maxDiag_idx];
               }
               i1 = div_nde_s32_floor((A_maxDiag_idx - nullStartIdx_tmp) - 1,
-                                     240);
+                                     300);
               memspace->workspace_double[i1] += -temp;
             }
           }
           nVars = cholmanager->ndims - 2;
           if (cholmanager->ndims != 0) {
             for (lastColC = 0; lastColC <= nVars + 1; lastColC++) {
-              A_maxDiag_idx = lastColC + lastColC * 240;
+              A_maxDiag_idx = lastColC + lastColC * 300;
               i = nVars - lastColC;
               for (ar = 0; ar <= i; ar++) {
                 br = (lastColC + ar) + 1;
@@ -348,12 +348,12 @@ void compute_deltax(const double H[25600], struct_T *solution,
           }
           i = cholmanager->ndims;
           for (br = 0; br < i; br++) {
-            memspace->workspace_double[br] /= cholmanager->FMat[br + 240 * br];
+            memspace->workspace_double[br] /= cholmanager->FMat[br + 300 * br];
           }
           nVars = cholmanager->ndims;
           if (cholmanager->ndims != 0) {
             for (lastColC = nVars; lastColC >= 1; lastColC--) {
-              A_maxDiag_idx = (lastColC - 1) * 240;
+              A_maxDiag_idx = (lastColC - 1) * 300;
               temp = memspace->workspace_double[lastColC - 1];
               i = lastColC + 1;
               for (ar = nVars; ar >= i; ar--) {
@@ -369,9 +369,9 @@ void compute_deltax(const double H[25600], struct_T *solution,
                           (nVar_tmp + 1) * sizeof(double));
             }
             br = 0;
-            i = (nullStartIdx_tmp + 240 * (mNull_tmp - 1)) + 1;
+            i = (nullStartIdx_tmp + 300 * (mNull_tmp - 1)) + 1;
             for (A_maxDiag_idx = nullStartIdx; A_maxDiag_idx <= i;
-                 A_maxDiag_idx += 240) {
+                 A_maxDiag_idx += 300) {
               i1 = A_maxDiag_idx + nVar_tmp;
               for (nVars = A_maxDiag_idx; nVars <= i1; nVars++) {
                 i2 = nVars - A_maxDiag_idx;

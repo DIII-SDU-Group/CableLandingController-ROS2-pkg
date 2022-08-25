@@ -18,7 +18,7 @@
 
 // Type Declarations
 namespace pos_MPC {
-struct d_struct_T;
+struct g_struct_T;
 
 }
 
@@ -29,10 +29,9 @@ namespace optim {
 namespace coder {
 namespace qpactiveset {
 namespace WorkingSet {
-void loadProblem(d_struct_T *obj, const double Aineq[25600],
-                 const double bineq[160], const double Aeq[12800],
-                 const double b_beq[80], int mLB, const double lb[160], int mUB,
-                 const double ub[160], int mFixed);
+void loadProblem(g_struct_T *obj, const double Aeq[21600],
+                 const double b_beq[120], int mLB, const double lb[180],
+                 int mUB, const double ub[180], int mFixed);
 
 }
 } // namespace qpactiveset

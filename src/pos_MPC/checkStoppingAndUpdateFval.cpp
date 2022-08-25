@@ -10,7 +10,7 @@
 
 // Include files
 #include "checkStoppingAndUpdateFval.h"
-#include "PositionMPCStepFunction_internal_types.h"
+#include "MPCStepFunction_internal_types.h"
 #include "computeFval_ReuseHx.h"
 #include "feasibleX0ForWorkingSet.h"
 #include "maxConstraintViolation.h"
@@ -24,10 +24,10 @@ namespace optim {
 namespace coder {
 namespace qpactiveset {
 namespace stopping {
-void checkStoppingAndUpdateFval(int *activeSetChangeID, const double f[160],
-                                struct_T *solution, f_struct_T *memspace,
+void checkStoppingAndUpdateFval(int *activeSetChangeID, const double f[180],
+                                struct_T *solution, e_struct_T *memspace,
                                 const b_struct_T *objective,
-                                d_struct_T *workingset, g_struct_T *qrmanager,
+                                g_struct_T *workingset, f_struct_T *qrmanager,
                                 double options_ObjectiveLimit,
                                 double runTimeOptions_ConstrRelTolFactor,
                                 boolean_T updateFval)
@@ -35,13 +35,13 @@ void checkStoppingAndUpdateFval(int *activeSetChangeID, const double f[160],
   int nVar;
   solution->iterations++;
   nVar = objective->nvar - 1;
-  if ((solution->iterations >= 10) &&
+  if ((solution->iterations >= 100) &&
       ((solution->state != 1) || (objective->objtype == 5))) {
     solution->state = 0;
   }
   if (solution->iterations - solution->iterations / 50 * 50 == 0) {
     solution->maxConstr =
-        WorkingSet::b_maxConstraintViolation(workingset, solution->xstar);
+        WorkingSet::maxConstraintViolation(workingset, solution->xstar);
     if (solution->maxConstr > 1.0E-8 * runTimeOptions_ConstrRelTolFactor) {
       double constrViolation_new;
       boolean_T nonDegenerateWset;
@@ -57,7 +57,7 @@ void checkStoppingAndUpdateFval(int *activeSetChangeID, const double f[160],
       }
       *activeSetChangeID = 0;
       constrViolation_new =
-          WorkingSet::b_maxConstraintViolation(workingset, solution->searchDir);
+          WorkingSet::maxConstraintViolation(workingset, solution->searchDir);
       if (constrViolation_new < solution->maxConstr) {
         if (0 <= nVar) {
           std::copy(&solution->searchDir[0], &solution->searchDir[nVar + 1],

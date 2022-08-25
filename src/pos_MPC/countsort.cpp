@@ -19,7 +19,7 @@ namespace coder {
 namespace optim {
 namespace coder {
 namespace utils {
-void countsort(int x[561], int xLen, int workspace[561], int xMin, int xMax)
+void countsort(int x[481], int xLen, int workspace[481], int xMin, int xMax)
 {
   if ((xLen > 1) && (xMax > xMin)) {
     int idx;

@@ -10,7 +10,7 @@
 
 // Include files
 #include "computeFirstOrderOpt.h"
-#include "PositionMPCStepFunction_internal_types.h"
+#include "MPCStepFunction_internal_types.h"
 #include "rt_nonfinite.h"
 #include <algorithm>
 #include <cmath>
@@ -24,8 +24,8 @@ namespace qpactiveset {
 namespace parseoutput {
 void computeFirstOrderOpt(struct_T *solution, const b_struct_T *objective,
                           int workingset_nVar,
-                          const double workingset_ATwset[90321],
-                          int workingset_nActiveConstr, double workspace[90321])
+                          const double workingset_ATwset[87061],
+                          int workingset_nActiveConstr, double workspace[87061])
 {
   double smax;
   int ix;
@@ -36,8 +36,8 @@ void computeFirstOrderOpt(struct_T *solution, const b_struct_T *objective,
   }
   if (workingset_nActiveConstr != 0) {
     ix = 0;
-    k = 161 * (workingset_nActiveConstr - 1) + 1;
-    for (int iac{1}; iac <= k; iac += 161) {
+    k = 181 * (workingset_nActiveConstr - 1) + 1;
+    for (int iac{1}; iac <= k; iac += 181) {
       int i;
       i = (iac + workingset_nVar) - 1;
       for (int ia{iac}; ia <= i; ia++) {

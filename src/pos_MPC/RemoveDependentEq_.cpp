@@ -10,7 +10,7 @@
 
 // Include files
 #include "RemoveDependentEq_.h"
-#include "PositionMPCStepFunction_internal_types.h"
+#include "MPCStepFunction_internal_types.h"
 #include "computeQ_.h"
 #include "countsort.h"
 #include "rt_nonfinite.h"
@@ -25,8 +25,8 @@ namespace optim {
 namespace coder {
 namespace qpactiveset {
 namespace initialize {
-int RemoveDependentEq_(f_struct_T *memspace, d_struct_T *workingset,
-                       g_struct_T *qrmanager)
+int RemoveDependentEq_(e_struct_T *memspace, g_struct_T *workingset,
+                       f_struct_T *qrmanager)
 {
   int mTotalWorkingEq_tmp_tmp;
   int mWorkingFixed;
@@ -46,8 +46,8 @@ int RemoveDependentEq_(f_struct_T *memspace, d_struct_T *workingset,
     int u0;
     for (idxDiag = 0; idxDiag < mTotalWorkingEq_tmp_tmp; idxDiag++) {
       for (idx_col = 0; idx_col <= nVar; idx_col++) {
-        qrmanager->QR[idxDiag + 240 * idx_col] =
-            workingset->ATwset[idx_col + 161 * idxDiag];
+        qrmanager->QR[idxDiag + 300 * idx_col] =
+            workingset->ATwset[idx_col + 181 * idxDiag];
       }
     }
     nDepInd = mTotalWorkingEq_tmp_tmp - workingset->nVar;
@@ -81,9 +81,9 @@ int RemoveDependentEq_(f_struct_T *memspace, d_struct_T *workingset,
     if (u0 >= mTotalWorkingEq_tmp_tmp) {
       u0 = mTotalWorkingEq_tmp_tmp;
     }
-    idxDiag = u0 + 240 * (u0 - 1);
+    idxDiag = u0 + 300 * (u0 - 1);
     while ((idxDiag > 0) && (std::abs(qrmanager->QR[idxDiag - 1]) < tol)) {
-      idxDiag -= 241;
+      idxDiag -= 301;
       nDepInd++;
     }
     if (nDepInd > 0) {
@@ -93,7 +93,7 @@ int RemoveDependentEq_(f_struct_T *memspace, d_struct_T *workingset,
       exitg1 = false;
       while ((!exitg1) && (idx <= nDepInd - 1)) {
         double qtb;
-        idxDiag = 240 * ((mTotalWorkingEq_tmp_tmp - idx) - 1);
+        idxDiag = 300 * ((mTotalWorkingEq_tmp_tmp - idx) - 1);
         qtb = 0.0;
         for (k = 0; k < mTotalWorkingEq_tmp_tmp; k++) {
           qtb += qrmanager->Q[idxDiag + k] * workingset->bwset[k];
@@ -109,8 +109,8 @@ int RemoveDependentEq_(f_struct_T *memspace, d_struct_T *workingset,
     if (nDepInd > 0) {
       int ix0;
       for (idx_col = 0; idx_col < mTotalWorkingEq_tmp_tmp; idx_col++) {
-        idxDiag = 240 * idx_col;
-        ix0 = 161 * idx_col;
+        idxDiag = 300 * idx_col;
+        ix0 = 181 * idx_col;
         for (k = 0; k <= nVar; k++) {
           qrmanager->QR[idxDiag + k] = workingset->ATwset[ix0 + k];
         }
@@ -164,9 +164,9 @@ int RemoveDependentEq_(f_struct_T *memspace, d_struct_T *workingset,
               for (u0 = 0; u0 < idx_col; u0++) {
                 workingset
                     ->ATwset[u0 +
-                             161 * (memspace->workspace_int[idx - 1] - 1)] =
+                             181 * (memspace->workspace_int[idx - 1] - 1)] =
                     workingset
-                        ->ATwset[u0 + 161 * (workingset->nActiveConstr - 1)];
+                        ->ATwset[u0 + 181 * (workingset->nActiveConstr - 1)];
               }
               workingset->bwset[i] =
                   workingset->bwset[workingset->nActiveConstr - 1];
@@ -185,8 +185,8 @@ int RemoveDependentEq_(f_struct_T *memspace, d_struct_T *workingset,
               workingset->Wlocalidx[idx_col - 1] = workingset->Wlocalidx[i - 1];
               ix0 = workingset->nVar;
               for (u0 = 0; u0 < ix0; u0++) {
-                workingset->ATwset[u0 + 161 * (idx_col - 1)] =
-                    workingset->ATwset[u0 + 161 * (i - 1)];
+                workingset->ATwset[u0 + 181 * (idx_col - 1)] =
+                    workingset->ATwset[u0 + 181 * (i - 1)];
               }
               workingset->bwset[idx_col - 1] = workingset->bwset[i - 1];
               workingset->Wid[i - 1] =
@@ -195,9 +195,9 @@ int RemoveDependentEq_(f_struct_T *memspace, d_struct_T *workingset,
                   workingset->Wlocalidx[workingset->nActiveConstr - 1];
               idx_col = workingset->nVar;
               for (u0 = 0; u0 < idx_col; u0++) {
-                workingset->ATwset[u0 + 161 * (i - 1)] =
+                workingset->ATwset[u0 + 181 * (i - 1)] =
                     workingset
-                        ->ATwset[u0 + 161 * (workingset->nActiveConstr - 1)];
+                        ->ATwset[u0 + 181 * (workingset->nActiveConstr - 1)];
               }
               workingset->bwset[i - 1] =
                   workingset->bwset[workingset->nActiveConstr - 1];

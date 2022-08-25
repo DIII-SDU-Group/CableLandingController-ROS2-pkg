@@ -33,9 +33,9 @@ namespace qpactiveset {
 namespace parseoutput {
 void computeFirstOrderOpt(struct_T *solution, const b_struct_T *objective,
                           int workingset_nVar,
-                          const double workingset_ATwset[90321],
+                          const double workingset_ATwset[87061],
                           int workingset_nActiveConstr,
-                          double workspace[90321]);
+                          double workspace[87061]);
 
 }
 } // namespace qpactiveset

@@ -10,9 +10,9 @@
 
 // Include files
 #include "computeFval.h"
-#include "PositionMPCStepFunction_internal_types.h"
-#include "linearForm_.h"
+#include "MPCStepFunction_internal_types.h"
 #include "rt_nonfinite.h"
+#include <algorithm>
 
 // Function Definitions
 namespace pos_MPC {
@@ -21,37 +21,71 @@ namespace optim {
 namespace coder {
 namespace qpactiveset {
 namespace Objective {
-double computeFval(const b_struct_T *obj, double workspace[90321],
-                   const double H[25600], const double f[160],
-                   const double x[161])
+double computeFval(const b_struct_T *obj, double workspace[87061],
+                   const double H[32400], const double f[180],
+                   const double x[181])
 {
   double val;
   switch (obj->objtype) {
   case 5:
-    val = obj->gammaScalar * x[obj->nvar - 1];
+    val = x[obj->nvar - 1];
     break;
   case 3: {
-    linearForm_(obj->hasLinear, obj->nvar, workspace, H, f, x);
+    int i;
+    int ix;
+    int ixlast;
+    i = obj->nvar;
+    if (0 <= i - 1) {
+      std::copy(&f[0], &f[i], &workspace[0]);
+    }
+    ixlast = obj->nvar;
+    ix = 0;
+    i = obj->nvar * (obj->nvar - 1) + 1;
+    for (int iac{1}; ixlast < 0 ? iac >= i : iac <= i; iac += ixlast) {
+      double c;
+      int i1;
+      c = 0.5 * x[ix];
+      i1 = (iac + obj->nvar) - 1;
+      for (int ia{iac}; ia <= i1; ia++) {
+        int i2;
+        i2 = ia - iac;
+        workspace[i2] += H[ia - 1] * c;
+      }
+      ix++;
+    }
     val = 0.0;
     if (obj->nvar >= 1) {
-      int ixlast;
       ixlast = obj->nvar;
-      for (int idx{0}; idx < ixlast; idx++) {
-        val += x[idx] * workspace[idx];
+      for (ix = 0; ix < ixlast; ix++) {
+        val += x[ix] * workspace[ix];
       }
     }
   } break;
   default: {
-    int idx;
+    int i;
+    int ix;
     int ixlast;
-    linearForm_(obj->hasLinear, obj->nvar, workspace, H, f, x);
-    ixlast = obj->nvar + 1;
-    for (idx = ixlast; idx < 161; idx++) {
-      workspace[idx - 1] = 0.0 * x[idx - 1];
+    ixlast = obj->nvar;
+    if (0 <= ixlast - 1) {
+      std::copy(&f[0], &f[ixlast], &workspace[0]);
+    }
+    ix = 0;
+    i = obj->nvar * (obj->nvar - 1) + 1;
+    for (int iac{1}; ixlast < 0 ? iac >= i : iac <= i; iac += ixlast) {
+      double c;
+      int i1;
+      c = 0.5 * x[ix];
+      i1 = (iac + obj->nvar) - 1;
+      for (int ia{iac}; ia <= i1; ia++) {
+        int i2;
+        i2 = ia - iac;
+        workspace[i2] += H[ia - 1] * c;
+      }
+      ix++;
     }
     val = 0.0;
-    for (idx = 0; idx < 160; idx++) {
-      val += x[idx] * workspace[idx];
+    for (ix = 0; ix < 180; ix++) {
+      val += x[ix] * workspace[ix];
     }
   } break;
   }

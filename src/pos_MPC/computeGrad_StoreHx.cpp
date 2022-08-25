@@ -10,7 +10,7 @@
 
 // Include files
 #include "computeGrad_StoreHx.h"
-#include "PositionMPCStepFunction_internal_types.h"
+#include "MPCStepFunction_internal_types.h"
 #include "rt_nonfinite.h"
 #include <algorithm>
 #include <cstring>
@@ -22,8 +22,8 @@ namespace optim {
 namespace coder {
 namespace qpactiveset {
 namespace Objective {
-void computeGrad_StoreHx(b_struct_T *obj, const double H[25600],
-                         const double f[160], const double x[161])
+void computeGrad_StoreHx(b_struct_T *obj, const double H[32400],
+                         const double f[180], const double x[181])
 {
   switch (obj->objtype) {
   case 5: {
@@ -94,10 +94,10 @@ void computeGrad_StoreHx(b_struct_T *obj, const double H[25600],
       }
     }
     i = obj->nvar + 1;
-    for (m_tmp_tmp = i; m_tmp_tmp < 161; m_tmp_tmp++) {
+    for (m_tmp_tmp = i; m_tmp_tmp < 181; m_tmp_tmp++) {
       obj->Hx[m_tmp_tmp - 1] = 0.0 * x[m_tmp_tmp - 1];
     }
-    std::copy(&obj->Hx[0], &obj->Hx[160], &obj->grad[0]);
+    std::copy(&obj->Hx[0], &obj->Hx[180], &obj->grad[0]);
     if (obj->hasLinear && (obj->nvar >= 1)) {
       i = obj->nvar - 1;
       for (m_tmp_tmp = 0; m_tmp_tmp <= i; m_tmp_tmp++) {

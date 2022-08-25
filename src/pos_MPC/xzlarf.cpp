@@ -10,7 +10,7 @@
 
 // Include files
 #include "xzlarf.h"
-#include "PositionMPCStepFunction_rtwutil.h"
+#include "MPCStepFunction_rtwutil.h"
 #include "rt_nonfinite.h"
 #include <cstring>
 
@@ -19,8 +19,8 @@ namespace pos_MPC {
 namespace coder {
 namespace internal {
 namespace reflapack {
-void xzlarf(int m, int n, int iv0, double tau, double C[134640], int ic0,
-            double work[561])
+void xzlarf(int m, int n, int iv0, double tau, double C[144300], int ic0,
+            double work[481])
 {
   int i;
   int ia;
@@ -38,7 +38,7 @@ void xzlarf(int m, int n, int iv0, double tau, double C[134640], int ic0,
     exitg2 = false;
     while ((!exitg2) && (lastc + 1 > 0)) {
       int exitg1;
-      i = ic0 + lastc * 240;
+      i = ic0 + lastc * 300;
       ia = i;
       do {
         exitg1 = 0;
@@ -69,14 +69,14 @@ void xzlarf(int m, int n, int iv0, double tau, double C[134640], int ic0,
       if (0 <= lastc) {
         std::memset(&work[0], 0, (lastc + 1) * sizeof(double));
       }
-      b_i = ic0 + 240 * lastc;
-      for (iac = ic0; iac <= b_i; iac += 240) {
+      b_i = ic0 + 300 * lastc;
+      for (iac = ic0; iac <= b_i; iac += 300) {
         c = 0.0;
         i = (iac + lastv) - 1;
         for (ia = iac; ia <= i; ia++) {
           c += C[ia - 1] * C[((iv0 + ia) - iac) - 1];
         }
-        i = div_nde_s32_floor(iac - ic0, 240);
+        i = div_nde_s32_floor(iac - ic0, 300);
         work[i] += c;
       }
     }
@@ -90,7 +90,7 @@ void xzlarf(int m, int n, int iv0, double tau, double C[134640], int ic0,
             C[ia - 1] += C[((iv0 + ia) - i) - 1] * c;
           }
         }
-        i += 240;
+        i += 300;
       }
     }
   }

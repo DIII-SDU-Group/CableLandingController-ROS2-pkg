@@ -18,9 +18,9 @@
 
 // Type Declarations
 namespace pos_MPC {
-struct d_struct_T;
-
 struct g_struct_T;
+
+struct f_struct_T;
 
 } // namespace pos_MPC
 
@@ -31,9 +31,9 @@ namespace optim {
 namespace coder {
 namespace qpactiveset {
 namespace initialize {
-boolean_T feasibleX0ForWorkingSet(double workspace[90321], double xCurrent[161],
-                                  d_struct_T *workingset,
-                                  g_struct_T *qrmanager);
+boolean_T feasibleX0ForWorkingSet(double workspace[87061], double xCurrent[181],
+                                  g_struct_T *workingset,
+                                  f_struct_T *qrmanager);
 
 }
 } // namespace qpactiveset

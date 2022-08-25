@@ -10,8 +10,8 @@
 
 // Include files
 #include "computeQ_.h"
-#include "PositionMPCStepFunction_internal_types.h"
-#include "PositionMPCStepFunction_rtwutil.h"
+#include "MPCStepFunction_internal_types.h"
+#include "MPCStepFunction_rtwutil.h"
 #include "rt_nonfinite.h"
 #include <algorithm>
 #include <cstring>
@@ -22,9 +22,9 @@ namespace coder {
 namespace optim {
 namespace coder {
 namespace QRManager {
-void computeQ_(g_struct_T *obj, int nrows)
+void computeQ_(f_struct_T *obj, int nrows)
 {
-  double work[240];
+  double work[300];
   int i;
   int iQR0;
   int idx;
@@ -32,7 +32,7 @@ void computeQ_(g_struct_T *obj, int nrows)
   int n;
   i = obj->minRowCol;
   for (idx = 0; idx < i; idx++) {
-    iQR0 = 240 * idx + idx;
+    iQR0 = 300 * idx + idx;
     n = obj->mrows - idx;
     if (0 <= n - 2) {
       std::copy(&obj->QR[iQR0 + 1],
@@ -48,7 +48,7 @@ void computeQ_(g_struct_T *obj, int nrows)
     int itau;
     i = nrows - 1;
     for (idx = n; idx <= i; idx++) {
-      ia = idx * 240;
+      ia = idx * 300;
       i1 = m - 1;
       if (0 <= i1) {
         std::memset(&obj->Q[ia], 0, (((i1 + ia) - ia) + 1) * sizeof(double));
@@ -56,20 +56,21 @@ void computeQ_(g_struct_T *obj, int nrows)
       obj->Q[ia + idx] = 1.0;
     }
     itau = obj->minRowCol - 1;
-    std::memset(&work[0], 0, 240U * sizeof(double));
+    std::memset(&work[0], 0, 300U * sizeof(double));
     for (int b_i = obj->minRowCol; b_i >= 1; b_i--) {
       int iaii;
-      iaii = b_i + (b_i - 1) * 240;
+      iaii = b_i + (b_i - 1) * 300;
       if (b_i < nrows) {
         int lastc;
         int lastv;
         obj->Q[iaii - 1] = 1.0;
-        idx = iaii + 240;
+        iQR0 = (m - b_i) - 1;
+        idx = iaii + 300;
         if (obj->tau[itau] != 0.0) {
           boolean_T exitg2;
-          lastv = m - b_i;
-          iQR0 = (iaii + m) - b_i;
-          while ((lastv + 1 > 0) && (obj->Q[iQR0 - 1] == 0.0)) {
+          lastv = iQR0 + 2;
+          iQR0 += iaii;
+          while ((lastv > 0) && (obj->Q[iQR0] == 0.0)) {
             lastv--;
             iQR0--;
           }
@@ -77,12 +78,12 @@ void computeQ_(g_struct_T *obj, int nrows)
           exitg2 = false;
           while ((!exitg2) && (lastc + 1 > 0)) {
             int exitg1;
-            iQR0 = (iaii + lastc * 240) + 240;
+            iQR0 = (iaii + lastc * 300) + 299;
             ia = iQR0;
             do {
               exitg1 = 0;
-              if (ia <= iQR0 + lastv) {
-                if (obj->Q[ia - 1] != 0.0) {
+              if (ia + 1 <= iQR0 + lastv) {
+                if (obj->Q[ia] != 0.0) {
                   exitg1 = 1;
                 } else {
                   ia++;
@@ -97,23 +98,23 @@ void computeQ_(g_struct_T *obj, int nrows)
             }
           }
         } else {
-          lastv = -1;
+          lastv = 0;
           lastc = -1;
         }
-        if (lastv + 1 > 0) {
+        if (lastv > 0) {
           double c;
           if (lastc + 1 != 0) {
             if (0 <= lastc) {
               std::memset(&work[0], 0, (lastc + 1) * sizeof(double));
             }
-            i = (iaii + 240 * lastc) + 240;
-            for (n = idx; n <= i; n += 240) {
+            i = (iaii + 300 * lastc) + 300;
+            for (n = idx; n <= i; n += 300) {
               c = 0.0;
-              i1 = n + lastv;
+              i1 = (n + lastv) - 1;
               for (ia = n; ia <= i1; ia++) {
                 c += obj->Q[ia - 1] * obj->Q[((iaii + ia) - n) - 1];
               }
-              iQR0 = div_nde_s32_floor((n - iaii) - 240, 240);
+              iQR0 = div_nde_s32_floor((n - iaii) - 300, 300);
               work[iQR0] += c;
             }
           }
@@ -123,13 +124,13 @@ void computeQ_(g_struct_T *obj, int nrows)
               c = work[idx];
               if (c != 0.0) {
                 c *= -obj->tau[itau];
-                i = iQR0 + 240;
+                i = iQR0 + 300;
                 i1 = lastv + iQR0;
-                for (n = i; n <= i1 + 240; n++) {
-                  obj->Q[n - 1] += obj->Q[((iaii + n) - iQR0) - 241] * c;
+                for (n = i; n <= i1 + 299; n++) {
+                  obj->Q[n - 1] += obj->Q[((iaii + n) - iQR0) - 301] * c;
                 }
               }
-              iQR0 += 240;
+              iQR0 += 300;
             }
           }
         }

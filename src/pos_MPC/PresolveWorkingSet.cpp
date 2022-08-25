@@ -10,7 +10,7 @@
 
 // Include files
 #include "PresolveWorkingSet.h"
-#include "PositionMPCStepFunction_internal_types.h"
+#include "MPCStepFunction_internal_types.h"
 #include "RemoveDependentEq_.h"
 #include "RemoveDependentIneq_.h"
 #include "feasibleX0ForWorkingSet.h"
@@ -24,13 +24,13 @@ namespace optim {
 namespace coder {
 namespace qpactiveset {
 namespace initialize {
-void PresolveWorkingSet(struct_T *solution, f_struct_T *memspace,
-                        d_struct_T *workingset, g_struct_T *qrmanager)
+void PresolveWorkingSet(struct_T *solution, e_struct_T *memspace,
+                        g_struct_T *workingset, f_struct_T *qrmanager)
 {
   int idxStartIneq;
   solution->state = 82;
   idxStartIneq = RemoveDependentEq_(memspace, workingset, qrmanager);
-  if ((idxStartIneq != -1) && (workingset->nActiveConstr <= 240)) {
+  if ((idxStartIneq != -1) && (workingset->nActiveConstr <= 300)) {
     boolean_T guard1{false};
     boolean_T okWorkingSet;
     RemoveDependentIneq_(workingset, qrmanager, memspace, 100.0);
@@ -53,7 +53,7 @@ void PresolveWorkingSet(struct_T *solution, f_struct_T *memspace,
                    workingset->nVar)) {
       double constrViolation;
       constrViolation =
-          WorkingSet::b_maxConstraintViolation(workingset, solution->xstar);
+          WorkingSet::maxConstraintViolation(workingset, solution->xstar);
       if (constrViolation > 1.0E-8) {
         solution->state = -2;
       }

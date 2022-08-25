@@ -10,7 +10,7 @@
 
 // Include files
 #include "modifyOverheadPhaseOne_.h"
-#include "PositionMPCStepFunction_internal_types.h"
+#include "MPCStepFunction_internal_types.h"
 #include "rt_nonfinite.h"
 
 // Function Definitions
@@ -20,29 +20,26 @@ namespace optim {
 namespace coder {
 namespace qpactiveset {
 namespace WorkingSet {
-void modifyOverheadPhaseOne_(d_struct_T *obj)
+void modifyOverheadPhaseOne_(g_struct_T *obj)
 {
   int i;
   int idx;
   int idxEq;
   i = obj->sizes[0];
   for (idx = 0; idx < i; idx++) {
-    obj->ATwset[161 * idx + 160] = 0.0;
+    obj->ATwset[181 * idx + 180] = 0.0;
   }
-  for (idx = 0; idx < 80; idx++) {
-    idxEq = 161 * idx + 160;
+  for (idx = 0; idx < 120; idx++) {
+    idxEq = 181 * idx + 180;
     obj->Aeq[idxEq] = 0.0;
-    obj->ATwset[idxEq + 161 * (obj->isActiveIdx[1] - 1)] = 0.0;
+    obj->ATwset[idxEq + 181 * (obj->isActiveIdx[1] - 1)] = 0.0;
   }
-  for (idx = 0; idx < 160; idx++) {
-    obj->Aineq[161 * idx + 160] = -1.0;
-  }
-  obj->indexLB[obj->sizes[3] - 1] = 161;
-  obj->lb[160] = obj->SLACK0;
+  obj->indexLB[obj->sizes[3] - 1] = 181;
+  obj->lb[180] = obj->SLACK0;
   idxEq = obj->isActiveIdx[2];
   i = obj->nActiveConstr;
   for (idx = idxEq; idx <= i; idx++) {
-    obj->ATwset[161 * (idx - 1) + 160] = -1.0;
+    obj->ATwset[181 * (idx - 1) + 180] = -1.0;
   }
   idxEq = obj->isActiveIdx[4];
   if (obj->nWConstr[4] > 0) {

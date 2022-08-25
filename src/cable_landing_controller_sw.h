@@ -33,19 +33,24 @@
 #include <tf2_ros/transform_listener.h>
 #include <tf2_ros/buffer.h>
 #include <tf2/exceptions.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
+#include <geometry_msgs/msg/pose.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/transform_stamped.hpp>
 
 #include "iii_interfaces/msg/control_state.hpp"
+#include "iii_interfaces/msg/powerline.hpp"
 #include "iii_interfaces/action/takeoff.hpp"
 #include "iii_interfaces/action/landing.hpp"
 #include "iii_interfaces/action/fly_to_position.hpp"
+#include "iii_interfaces/action/cable_landing.hpp"
 
 #include "geometry.h"
 #include "blocking_queue.h"
 
-#include "PositionMPCStepFunction.h"
+#include "MPCStepFunction.h"
+//#include "PositionMPCStepFunction.h"
 #include "rt_nonfinite.h"
 
 /*****************************************************************************/
@@ -61,7 +66,7 @@ using namespace std::chrono_literals;
 typedef Eigen::Matrix<float, 3, 1> pos3_t;
 typedef Eigen::Matrix<float, 4, 1> pos4_t;
 typedef Eigen::Matrix<float, 6, 1> state3_t;
-typedef Eigen::Matrix<float, 8, 1> state4_t;
+typedef Eigen::Matrix<float, 12, 1> state4_t;
 
 enum state_t {
 	init = 0,
@@ -72,14 +77,17 @@ enum state_t {
 	taking_off,
 	hovering,
 	landing,
-	in_positional_flight
+	in_positional_flight,
+	during_cable_landing,
+	on_cable_armed
 };
 
 enum request_type_t {
 	cancel_request,
 	takeoff_request,
 	landing_request,
-	fly_to_position_request
+	fly_to_position_request,
+	cable_landing_request
 };
 
 struct takeoff_request_params_t {
@@ -88,6 +96,10 @@ struct takeoff_request_params_t {
 
 struct fly_to_position_request_params_t {
 	pos4_t target_position;
+};
+
+struct cable_landing_request_params_t {
+	int cable_id;
 };
 
 struct request_t {
@@ -159,6 +171,9 @@ public:
 	using FlyToPosition = iii_interfaces::action::FlyToPosition;
 	using GoalHandleFlyToPosition = rclcpp_action::ServerGoalHandle<FlyToPosition>;
 
+	using CableLanding = iii_interfaces::action::CableLanding;
+	using GoalHandleCableLanding = rclcpp_action::ServerGoalHandle<CableLanding>;
+
 	CableLandingController(const std::string & node_name="cable_landing_controller", 
 			const std::string & node_namespace="/cable_landing_controller", 
 			const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
@@ -198,6 +213,17 @@ private:
 	void handleAcceptedFlyToPosition(const std::shared_ptr<GoalHandleFlyToPosition> goal_handle);
 	void followFlyToPositionCompletion(const std::shared_ptr<GoalHandleFlyToPosition> goal_handle);
 
+	// Cable landing action:
+	rclcpp_action::Server<CableLanding>::SharedPtr cable_landing_server_;
+
+	rclcpp_action::GoalResponse handleGoalCableLanding(
+		const rclcpp_action::GoalUUID & uuid, 
+		std::shared_ptr<const CableLanding::Goal> goal
+	);
+	rclcpp_action::CancelResponse handleCancelCableLanding(const std::shared_ptr<GoalHandleCableLanding> goal_handle);
+	void handleAcceptedCableLanding(const std::shared_ptr<GoalHandleCableLanding> goal_handle);
+	void followCableLandingCompletion(const std::shared_ptr<GoalHandleCableLanding> goal_handle);
+
 	// General member variables:
 	state_t state_ = init;
 
@@ -211,10 +237,16 @@ private:
 	vector_t odom_vel_;
 
 	std::vector<state4_t> planned_trajectory_;
+	std::vector<state4_t> planned_macro_trajectory_;
 	state4_t trajectory_target_;
+
+	iii_interfaces::msg::Powerline powerline_;
+	int target_cable_id_ = -1;
+	geometry_msgs::msg::PoseStamped target_cable_pose_;
 
 	std::mutex odometry_mutex_;
 	std::mutex planned_trajectory_mutex_;
+	std::mutex powerline_mutex_;
 
     std::shared_ptr<tf2_ros::TransformListener> transform_listener_{nullptr};
     std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
@@ -231,6 +263,8 @@ private:
 	rclcpp::Subscription<px4_msgs::msg::Timesync>::SharedPtr timesync_sub_;
 	rclcpp::Subscription<px4_msgs::msg::VehicleOdometry>::SharedPtr odometry_sub_;
 
+	rclcpp::Subscription<iii_interfaces::msg::Powerline>::SharedPtr powerline_sub_;
+
 	rclcpp::Publisher<px4_msgs::msg::VehicleCommand>::SharedPtr vehicle_command_pub_;
 	rclcpp::Publisher<px4_msgs::msg::TrajectorySetpoint>::SharedPtr trajectory_setpoint_pub_;
 
@@ -239,11 +273,17 @@ private:
 	rclcpp::Publisher<px4_msgs::msg::OffboardControlMode>::SharedPtr offboard_control_mode_pub_;
 
 	rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr planned_traj_pub_;
+	rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr planned_macro_traj_pub_;
 	rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr planned_target_pub_;
+
+	std::thread MPC_thread_;
+	double MPC_x_[9];
+	double MPC_planned_traj_[180];
 
 	// General member methods:
 	void stateMachineCallback();
 	void odometryCallback(px4_msgs::msg::VehicleOdometry::SharedPtr msg);
+	void powerlineCallback(iii_interfaces::msg::Powerline::SharedPtr msg);
 
 	bool isOffboard();
 	bool isArmed();
@@ -271,12 +311,21 @@ private:
 	state4_t loadVehicleState();
 	geometry_msgs::msg::PoseStamped loadVehiclePose();
 	nav_msgs::msg::Path loadPlannedPath();
+	nav_msgs::msg::Path loadPlannedMacroPath();
 	geometry_msgs::msg::PoseStamped loadPlannedTarget();
+	state4_t loadTargetCableState();
 
-	state4_t stepPositionMPC(state4_t vehicle_state, state4_t target, bool reset);
+	state4_t stepPositionMPC(state4_t vehicle_state, state4_t target_state, bool reset);
+	void threadFunctionPositionMPC(double *x, double *planned_traj, double *target, 
+		int reset_target, int reset_trajectory, int reset_bounds, int reset_weights);
+
+	state4_t stepCableLandingMPC(state4_t vehicle_state, state4_t target_state, bool reset);
 
 	void clearPlannedTrajectory();
 	void setTrajectoryTarget(state4_t target);
+
+	bool updateTargetCablePose(int new_id = -1);
+	void clearTargetCable();
 
 };
 

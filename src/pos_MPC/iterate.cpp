@@ -10,8 +10,8 @@
 
 // Include files
 #include "iterate.h"
-#include "PositionMPCStepFunction_internal_types.h"
-#include "PositionMPCStepFunction_rtwutil.h"
+#include "MPCStepFunction_internal_types.h"
+#include "MPCStepFunction_rtwutil.h"
 #include "addBoundToActiveSetMatrix_.h"
 #include "checkStoppingAndUpdateFval.h"
 #include "computeFval_ReuseHx.h"
@@ -34,9 +34,9 @@ namespace coder {
 namespace optim {
 namespace coder {
 namespace qpactiveset {
-void iterate(const double H[25600], const double f[160], struct_T *solution,
-             f_struct_T *memspace, d_struct_T *workingset,
-             g_struct_T *qrmanager, c_struct_T *cholmanager,
+void iterate(const double H[32400], const double f[180], struct_T *solution,
+             e_struct_T *memspace, g_struct_T *workingset,
+             f_struct_T *qrmanager, c_struct_T *cholmanager,
              b_struct_T *objective, double options_ObjectiveLimit,
              double options_StepTolerance,
              double runTimeOptions_ConstrRelTolFactor,
@@ -51,8 +51,8 @@ void iterate(const double H[25600], const double f[160], struct_T *solution,
   int TYPE;
   int activeSetChangeID;
   int globalActiveConstrIdx;
+  int idxRotGCol;
   int iyend;
-  int localActiveConstrIdx;
   int nVar_tmp_tmp;
   boolean_T newBlocking;
   boolean_T subProblemChanged;
@@ -67,71 +67,69 @@ void iterate(const double H[25600], const double f[160], struct_T *solution,
   Objective::computeGrad_StoreHx(objective, H, f, solution->xstar);
   solution->fstar = Objective::computeFval_ReuseHx(
       objective, memspace->workspace_double, f, solution->xstar);
-  if (solution->iterations < 10) {
+  if (solution->iterations < 100) {
     solution->state = -5;
   } else {
     solution->state = 0;
   }
-  std::memset(&solution->lambda[0], 0, 561U * sizeof(double));
+  std::memset(&solution->lambda[0], 0, 481U * sizeof(double));
   int exitg1;
   do {
     exitg1 = 0;
     if (solution->state == -5) {
-      int i;
-      int iAineq0;
-      int iac;
+      int ia;
       int idx;
+      int idxMinLambda;
+      int k;
       boolean_T guard1{false};
       guard1 = false;
       if (subProblemChanged) {
         switch (activeSetChangeID) {
         case 1:
-          localActiveConstrIdx = 161 * (workingset->nActiveConstr - 1);
-          iyend = qrmanager->mrows;
-          iAineq0 = qrmanager->ncols + 1;
-          if (iyend < iAineq0) {
-            iAineq0 = iyend;
+          idxMinLambda = 181 * (workingset->nActiveConstr - 1);
+          idxRotGCol = qrmanager->mrows;
+          iyend = qrmanager->ncols + 1;
+          if (idxRotGCol < iyend) {
+            iyend = idxRotGCol;
           }
-          qrmanager->minRowCol = iAineq0;
-          iAineq0 = 240 * qrmanager->ncols;
+          qrmanager->minRowCol = iyend;
+          idxRotGCol = 300 * qrmanager->ncols;
           if (qrmanager->mrows != 0) {
-            iyend = iAineq0 + qrmanager->mrows;
-            if (iAineq0 + 1 <= iyend) {
-              std::memset(&qrmanager->QR[iAineq0], 0,
-                          (iyend - iAineq0) * sizeof(double));
+            iyend = idxRotGCol + qrmanager->mrows;
+            if (idxRotGCol + 1 <= iyend) {
+              std::memset(&qrmanager->QR[idxRotGCol], 0,
+                          (iyend - idxRotGCol) * sizeof(double));
             }
-            i = 240 * (qrmanager->mrows - 1) + 1;
-            for (iac = 1; iac <= i; iac += 240) {
+            k = 300 * (qrmanager->mrows - 1) + 1;
+            for (idx = 1; idx <= k; idx += 300) {
               c = 0.0;
-              iyend = (iac + qrmanager->mrows) - 1;
-              for (idx = iac; idx <= iyend; idx++) {
-                c += qrmanager->Q[idx - 1] *
-                     workingset->ATwset[(localActiveConstrIdx + idx) - iac];
+              iyend = (idx + qrmanager->mrows) - 1;
+              for (ia = idx; ia <= iyend; ia++) {
+                c += qrmanager->Q[ia - 1] *
+                     workingset->ATwset[(idxMinLambda + ia) - idx];
               }
-              iyend = iAineq0 + div_nde_s32_floor(iac - 1, 240);
+              iyend = idxRotGCol + div_nde_s32_floor(idx - 1, 300);
               qrmanager->QR[iyend] += c;
             }
           }
           qrmanager->ncols++;
           qrmanager->jpvt[qrmanager->ncols - 1] = qrmanager->ncols;
           for (idx = qrmanager->mrows - 2; idx + 2 > qrmanager->ncols; idx--) {
-            iyend = 240 * (qrmanager->ncols - 1);
-            i = (idx + iyend) + 1;
-            temp_tmp = qrmanager->QR[i];
-            internal::blas::xrotg(&qrmanager->QR[idx + iyend], &temp_tmp, &c,
-                                  &s);
-            qrmanager->QR[i] = temp_tmp;
-            iyend = 240 * idx;
-            iAineq0 = qrmanager->mrows;
+            idxRotGCol = 300 * (qrmanager->ncols - 1);
+            k = (idx + idxRotGCol) + 1;
+            temp_tmp = qrmanager->QR[k];
+            internal::blas::xrotg(&qrmanager->QR[idx + idxRotGCol], &temp_tmp,
+                                  &c, &s);
+            qrmanager->QR[k] = temp_tmp;
+            idxRotGCol = 300 * idx;
+            iyend = qrmanager->mrows;
             if (qrmanager->mrows >= 1) {
-              for (iac = 0; iac < iAineq0; iac++) {
-                localActiveConstrIdx = iyend + iac;
-                minLambda = qrmanager->Q[localActiveConstrIdx + 240];
-                temp_tmp = qrmanager->Q[localActiveConstrIdx];
-                qrmanager->Q[localActiveConstrIdx + 240] =
-                    c * minLambda - s * temp_tmp;
-                qrmanager->Q[localActiveConstrIdx] =
-                    c * temp_tmp + s * minLambda;
+              for (k = 0; k < iyend; k++) {
+                idxMinLambda = idxRotGCol + k;
+                minLambda = qrmanager->Q[idxMinLambda + 300];
+                temp_tmp = qrmanager->Q[idxMinLambda];
+                qrmanager->Q[idxMinLambda + 300] = c * minLambda - s * temp_tmp;
+                qrmanager->Q[idxMinLambda] = c * temp_tmp + s * minLambda;
               }
             }
           }
@@ -157,51 +155,37 @@ void iterate(const double H[25600], const double f[160], struct_T *solution,
           updateFval = (TYPE == 5);
           if (updateFval || runTimeOptions_RemainFeasible) {
             feasibleratiotest(
-                solution->xstar, solution->searchDir,
-                memspace->workspace_double, workingset->nVar, workingset->Aineq,
-                workingset->bineq, workingset->lb, workingset->ub,
-                workingset->indexLB, workingset->indexUB, workingset->sizes,
-                workingset->isActiveIdx, workingset->isActiveConstr,
-                workingset->nWConstr, updateFval, &minLambda, &newBlocking,
-                &iyend, &localActiveConstrIdx);
+                solution->xstar, solution->searchDir, workingset->nVar,
+                workingset->lb, workingset->ub, workingset->indexLB,
+                workingset->indexUB, workingset->sizes, workingset->isActiveIdx,
+                workingset->isActiveConstr, workingset->nWConstr, updateFval,
+                &minLambda, &newBlocking, &idxRotGCol, &iyend);
           } else {
-            ratiotest(solution->xstar, solution->searchDir,
-                      memspace->workspace_double, workingset->nVar,
-                      workingset->Aineq, workingset->bineq, workingset->lb,
-                      workingset->ub, workingset->indexLB, workingset->indexUB,
-                      workingset->sizes, workingset->isActiveIdx,
-                      workingset->isActiveConstr, workingset->nWConstr,
-                      &tolDelta, &minLambda, &newBlocking, &iyend,
-                      &localActiveConstrIdx);
+            ratiotest(solution->xstar, solution->searchDir, workingset->nVar,
+                      workingset->lb, workingset->ub, workingset->indexLB,
+                      workingset->indexUB, workingset->sizes,
+                      workingset->isActiveIdx, workingset->isActiveConstr,
+                      workingset->nWConstr, &tolDelta, &minLambda, &newBlocking,
+                      &idxRotGCol, &iyend);
           }
           if (newBlocking) {
-            switch (iyend) {
+            switch (idxRotGCol) {
             case 3:
               workingset->nWConstr[2]++;
-              workingset->isActiveConstr[(workingset->isActiveIdx[2] +
-                                          localActiveConstrIdx) -
-                                         2] = true;
+              workingset
+                  ->isActiveConstr[(workingset->isActiveIdx[2] + iyend) - 2] =
+                  true;
               workingset->nActiveConstr++;
               workingset->Wid[workingset->nActiveConstr - 1] = 3;
-              workingset->Wlocalidx[workingset->nActiveConstr - 1] =
-                  localActiveConstrIdx;
-              iAineq0 = 161 * (localActiveConstrIdx - 1);
-              iyend = 161 * (workingset->nActiveConstr - 1);
-              i = workingset->nVar - 1;
-              for (idx = 0; idx <= i; idx++) {
-                workingset->ATwset[iyend + idx] =
-                    workingset->Aineq[iAineq0 + idx];
-              }
-              workingset->bwset[workingset->nActiveConstr - 1] =
-                  workingset->bineq[localActiveConstrIdx - 1];
+              workingset->Wlocalidx[workingset->nActiveConstr - 1] = iyend;
+              // A check that is always false is detected at compile-time.
+              // Eliminating code that follows.
               break;
             case 4:
-              WorkingSet::addBoundToActiveSetMatrix_(workingset, 4,
-                                                     localActiveConstrIdx);
+              WorkingSet::addBoundToActiveSetMatrix_(workingset, 4, iyend);
               break;
             default:
-              WorkingSet::addBoundToActiveSetMatrix_(workingset, 5,
-                                                     localActiveConstrIdx);
+              WorkingSet::addBoundToActiveSetMatrix_(workingset, 5, iyend);
               break;
             }
             activeSetChangeID = 1;
@@ -221,9 +205,9 @@ void iterate(const double H[25600], const double f[160], struct_T *solution,
             }
           }
           if (!(minLambda == 0.0)) {
-            iyend = nVar_tmp_tmp - 1;
-            for (iac = 0; iac <= iyend; iac++) {
-              solution->xstar[iac] += minLambda * solution->searchDir[iac];
+            idxRotGCol = nVar_tmp_tmp - 1;
+            for (k = 0; k <= idxRotGCol; k++) {
+              solution->xstar[k] += minLambda * solution->searchDir[k];
             }
           }
           Objective::computeGrad_StoreHx(objective, H, f, solution->xstar);
@@ -256,11 +240,11 @@ void iterate(const double H[25600], const double f[160], struct_T *solution,
             idx = qrmanager->ncols;
             b_guard1 = false;
             if (qrmanager->mrows < qrmanager->ncols) {
-              iAineq0 = qrmanager->mrows + 240 * (qrmanager->ncols - 1);
+              iyend = qrmanager->mrows + 300 * (qrmanager->ncols - 1);
               while ((idx > qrmanager->mrows) &&
-                     (std::abs(qrmanager->QR[iAineq0 - 1]) >= minLambda)) {
+                     (std::abs(qrmanager->QR[iyend - 1]) >= minLambda)) {
                 idx--;
-                iAineq0 -= 240;
+                iyend -= 300;
               }
               updateFval = (idx == qrmanager->mrows);
               if (updateFval) {
@@ -270,11 +254,11 @@ void iterate(const double H[25600], const double f[160], struct_T *solution,
               b_guard1 = true;
             }
             if (b_guard1) {
-              iAineq0 = idx + 240 * (idx - 1);
+              iyend = idx + 300 * (idx - 1);
               while ((idx >= 1) &&
-                     (std::abs(qrmanager->QR[iAineq0 - 1]) >= minLambda)) {
+                     (std::abs(qrmanager->QR[iyend - 1]) >= minLambda)) {
                 idx--;
-                iAineq0 -= 241;
+                iyend -= 301;
               }
               updateFval = (idx == 0);
             }
@@ -288,28 +272,27 @@ void iterate(const double H[25600], const double f[160], struct_T *solution,
                 std::memset(&memspace->workspace_double[0], 0,
                             iyend * sizeof(double));
               }
-              i = 240 * (qrmanager->ncols - 1) + 1;
-              for (iac = 1; iac <= i; iac += 240) {
+              k = 300 * (qrmanager->ncols - 1) + 1;
+              for (idx = 1; idx <= k; idx += 300) {
                 c = 0.0;
-                iyend = (iac + qrmanager->mrows) - 1;
-                for (idx = iac; idx <= iyend; idx++) {
-                  c += qrmanager->Q[idx - 1] * objective->grad[idx - iac];
+                iyend = (idx + qrmanager->mrows) - 1;
+                for (ia = idx; ia <= iyend; ia++) {
+                  c += qrmanager->Q[ia - 1] * objective->grad[ia - idx];
                 }
-                iyend = div_nde_s32_floor(iac - 1, 240);
+                iyend = div_nde_s32_floor(idx - 1, 300);
                 memspace->workspace_double[iyend] += c;
               }
             }
-            for (localActiveConstrIdx = nActiveConstr;
-                 localActiveConstrIdx >= 1; localActiveConstrIdx--) {
-              iyend =
-                  (localActiveConstrIdx + (localActiveConstrIdx - 1) * 240) - 1;
-              memspace->workspace_double[localActiveConstrIdx - 1] /=
-                  qrmanager->QR[iyend];
-              for (iac = 0; iac <= localActiveConstrIdx - 2; iac++) {
-                iAineq0 = (localActiveConstrIdx - iac) - 2;
-                memspace->workspace_double[iAineq0] -=
-                    memspace->workspace_double[localActiveConstrIdx - 1] *
-                    qrmanager->QR[(iyend - iac) - 1];
+            for (idxMinLambda = nActiveConstr; idxMinLambda >= 1;
+                 idxMinLambda--) {
+              idxRotGCol = (idxMinLambda + (idxMinLambda - 1) * 300) - 1;
+              memspace->workspace_double[idxMinLambda - 1] /=
+                  qrmanager->QR[idxRotGCol];
+              for (k = 0; k <= idxMinLambda - 2; k++) {
+                iyend = (idxMinLambda - k) - 2;
+                memspace->workspace_double[iyend] -=
+                    memspace->workspace_double[idxMinLambda - 1] *
+                    qrmanager->QR[(idxRotGCol - k) - 1];
               }
             }
             for (idx = 0; idx < nActiveConstr; idx++) {
@@ -319,59 +302,58 @@ void iterate(const double H[25600], const double f[160], struct_T *solution,
         }
         if ((solution->state != -7) ||
             (workingset->nActiveConstr > nVar_tmp_tmp)) {
-          localActiveConstrIdx = -1;
+          idxMinLambda = -1;
           minLambda = 0.0 * runTimeOptions_ProbRelTolFactor *
                       static_cast<double>(TYPE != 5);
-          i = (workingset->nWConstr[0] + workingset->nWConstr[1]) + 1;
+          k = (workingset->nWConstr[0] + workingset->nWConstr[1]) + 1;
           iyend = workingset->nActiveConstr;
-          for (idx = i; idx <= iyend; idx++) {
+          for (idx = k; idx <= iyend; idx++) {
             temp_tmp = solution->lambda[idx - 1];
             if (temp_tmp < minLambda) {
               minLambda = temp_tmp;
-              localActiveConstrIdx = idx - 1;
+              idxMinLambda = idx - 1;
             }
           }
-          if (localActiveConstrIdx + 1 == 0) {
+          if (idxMinLambda + 1 == 0) {
             solution->state = 1;
           } else {
             activeSetChangeID = -1;
-            globalActiveConstrIdx = localActiveConstrIdx + 1;
+            globalActiveConstrIdx = idxMinLambda + 1;
             subProblemChanged = true;
-            iyend = workingset->Wid[localActiveConstrIdx] - 1;
+            idxRotGCol = workingset->Wid[idxMinLambda] - 1;
             workingset->isActiveConstr
-                [(workingset
-                      ->isActiveIdx[workingset->Wid[localActiveConstrIdx] - 1] +
-                  workingset->Wlocalidx[localActiveConstrIdx]) -
+                [(workingset->isActiveIdx[workingset->Wid[idxMinLambda] - 1] +
+                  workingset->Wlocalidx[idxMinLambda]) -
                  2] = false;
-            workingset->Wid[localActiveConstrIdx] =
+            workingset->Wid[idxMinLambda] =
                 workingset->Wid[workingset->nActiveConstr - 1];
-            workingset->Wlocalidx[localActiveConstrIdx] =
+            workingset->Wlocalidx[idxMinLambda] =
                 workingset->Wlocalidx[workingset->nActiveConstr - 1];
-            i = workingset->nVar;
-            for (idx = 0; idx < i; idx++) {
-              workingset->ATwset[idx + 161 * localActiveConstrIdx] =
+            k = workingset->nVar;
+            for (idx = 0; idx < k; idx++) {
+              workingset->ATwset[idx + 181 * idxMinLambda] =
                   workingset
-                      ->ATwset[idx + 161 * (workingset->nActiveConstr - 1)];
+                      ->ATwset[idx + 181 * (workingset->nActiveConstr - 1)];
             }
-            workingset->bwset[localActiveConstrIdx] =
+            workingset->bwset[idxMinLambda] =
                 workingset->bwset[workingset->nActiveConstr - 1];
             workingset->nActiveConstr--;
-            workingset->nWConstr[iyend]--;
-            solution->lambda[localActiveConstrIdx] = 0.0;
+            workingset->nWConstr[idxRotGCol]--;
+            solution->lambda[idxMinLambda] = 0.0;
           }
         } else {
-          localActiveConstrIdx = workingset->nActiveConstr;
+          idxMinLambda = workingset->nActiveConstr;
           activeSetChangeID = 0;
           globalActiveConstrIdx = workingset->nActiveConstr;
           subProblemChanged = true;
           iyend = workingset->nActiveConstr - 1;
-          iAineq0 = workingset->Wid[iyend] - 1;
-          workingset->isActiveConstr[(workingset->isActiveIdx[iAineq0] +
+          idxRotGCol = workingset->Wid[iyend] - 1;
+          workingset->isActiveConstr[(workingset->isActiveIdx[idxRotGCol] +
                                       workingset->Wlocalidx[iyend]) -
                                      2] = false;
           workingset->nActiveConstr--;
-          workingset->nWConstr[iAineq0]--;
-          solution->lambda[localActiveConstrIdx - 1] = 0.0;
+          workingset->nWConstr[idxRotGCol]--;
+          solution->lambda[idxMinLambda - 1] = 0.0;
         }
         updateFval = false;
         stopping::checkStoppingAndUpdateFval(

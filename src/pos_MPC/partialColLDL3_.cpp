@@ -10,7 +10,7 @@
 
 // Include files
 #include "partialColLDL3_.h"
-#include "PositionMPCStepFunction_internal_types.h"
+#include "MPCStepFunction_internal_types.h"
 #include "rt_nonfinite.h"
 #include <cmath>
 
@@ -38,25 +38,25 @@ void partialColLDL3_(c_struct_T *obj, int LD_offset, int NColsRemain,
   i = NColsRemain - 1;
   for (k = 0; k < 48; k++) {
     subRows = (NColsRemain - k) - 1;
-    LD_diagOffset = (LD_offset + 241 * k) - 1;
-    W_diagOffset = 241 * k;
+    LD_diagOffset = (LD_offset + 301 * k) - 1;
+    W_diagOffset = 301 * k;
     for (idx = 0; idx <= subRows; idx++) {
       obj->workspace_[W_diagOffset + idx] = obj->FMat[LD_diagOffset + idx];
     }
-    offsetColK = 240 * k;
+    offsetColK = 300 * k;
     for (idx = 0; idx <= i; idx++) {
       obj->workspace2_[idx] = obj->workspace_[offsetColK + idx];
     }
     if ((NColsRemain != 0) && (k != 0)) {
       ix = LD_offset + k;
-      i1 = 240 * (k - 1) + 1;
-      for (idx = 1; idx <= i1; idx += 240) {
+      i1 = 300 * (k - 1) + 1;
+      for (idx = 1; idx <= i1; idx += 300) {
         i2 = (idx + NColsRemain) - 1;
         for (ia = idx; ia <= i2; ia++) {
           i3 = ia - idx;
           obj->workspace2_[i3] += obj->workspace_[ia - 1] * -obj->FMat[ix - 1];
         }
-        ix += 240;
+        ix += 300;
       }
     }
     for (idx = 0; idx <= i; idx++) {
@@ -87,15 +87,15 @@ void partialColLDL3_(c_struct_T *obj, int LD_offset, int NColsRemain,
     i1 = ia0 - 1;
     for (k = j; k <= i1; k++) {
       m = ia0 - k;
-      offsetColK = (LD_offset + 241 * k) - 1;
+      offsetColK = (LD_offset + 301 * k) - 1;
       for (idx = 0; idx < 48; idx++) {
-        obj->workspace2_[idx] = obj->FMat[((LD_offset + k) + idx * 240) - 1];
+        obj->workspace2_[idx] = obj->FMat[((LD_offset + k) + idx * 300) - 1];
       }
       subRows = k + 1;
       if (m != 0) {
         ix = 0;
-        i2 = k + 11281;
-        for (idx = subRows; idx <= i2; idx += 240) {
+        i2 = k + 14101;
+        for (idx = subRows; idx <= i2; idx += 300) {
           i3 = (idx + m) - 1;
           for (ia = idx; ia <= i3; ia++) {
             LD_diagOffset = (offsetColK + ia) - idx;
@@ -108,24 +108,24 @@ void partialColLDL3_(c_struct_T *obj, int LD_offset, int NColsRemain,
     }
     if (ia0 < NColsRemain) {
       m = W_diagOffset - subBlockSize;
-      ia = ((LD_offset + subBlockSize) + 241 * j) - 1;
+      ia = ((LD_offset + subBlockSize) + 301 * j) - 1;
       i1 = subBlockSize - 1;
       for (idx = 0; idx < 48; idx++) {
-        subRows = (LD_offset + j) + idx * 240;
-        LD_diagOffset = idx * 240;
+        subRows = (LD_offset + j) + idx * 300;
+        LD_diagOffset = idx * 300;
         for (W_diagOffset = 0; W_diagOffset <= i1; W_diagOffset++) {
           obj->workspace2_[LD_diagOffset + W_diagOffset] =
               obj->FMat[(subRows + W_diagOffset) - 1];
         }
       }
       if ((m != 0) && (subBlockSize != 0)) {
-        subRows = ia + 240 * (subBlockSize - 1);
+        subRows = ia + 300 * (subBlockSize - 1);
         LD_diagOffset = 0;
-        for (offsetColK = ia; offsetColK <= subRows; offsetColK += 240) {
+        for (offsetColK = ia; offsetColK <= subRows; offsetColK += 300) {
           W_diagOffset = ia0 - 1;
           LD_diagOffset++;
-          i1 = LD_diagOffset + 11280;
-          for (idx = LD_diagOffset; idx <= i1; idx += 240) {
+          i1 = LD_diagOffset + 14100;
+          for (idx = LD_diagOffset; idx <= i1; idx += 300) {
             i2 = offsetColK + 1;
             i3 = offsetColK + m;
             for (ix = i2; ix <= i3; ix++) {
@@ -133,7 +133,7 @@ void partialColLDL3_(c_struct_T *obj, int LD_offset, int NColsRemain,
                   -obj->workspace2_[idx - 1] *
                   obj->workspace_[(W_diagOffset + ix) - offsetColK];
             }
-            W_diagOffset += 240;
+            W_diagOffset += 300;
           }
         }
       }

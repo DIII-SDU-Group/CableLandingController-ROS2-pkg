@@ -10,7 +10,7 @@
 
 // Include files
 #include "factorQR.h"
-#include "PositionMPCStepFunction_internal_types.h"
+#include "MPCStepFunction_internal_types.h"
 #include "rt_nonfinite.h"
 #include "xzgeqp3.h"
 #include <cstring>
@@ -21,7 +21,7 @@ namespace coder {
 namespace optim {
 namespace coder {
 namespace QRManager {
-void factorQR(g_struct_T *obj, const double b_A[90321], int mrows, int ncols)
+void factorQR(f_struct_T *obj, const double A[87061], int mrows, int ncols)
 {
   int idx;
   int ix0;
@@ -31,10 +31,10 @@ void factorQR(g_struct_T *obj, const double b_A[90321], int mrows, int ncols)
   if (ix0 > 0) {
     for (idx = 0; idx < ncols; idx++) {
       int iy0;
-      ix0 = 161 * idx;
-      iy0 = 240 * idx;
+      ix0 = 181 * idx;
+      iy0 = 300 * idx;
       for (int k{0}; k < mrows; k++) {
-        obj->QR[iy0 + k] = b_A[ix0 + k];
+        obj->QR[iy0 + k] = A[ix0 + k];
       }
     }
     guard1 = true;
@@ -58,7 +58,7 @@ void factorQR(g_struct_T *obj, const double b_A[90321], int mrows, int ncols)
       ix0 = ncols;
     }
     obj->minRowCol = ix0;
-    std::memset(&obj->tau[0], 0, 240U * sizeof(double));
+    std::memset(&obj->tau[0], 0, 300U * sizeof(double));
     if (ix0 >= 1) {
       internal::reflapack::qrf(obj->QR, mrows, ncols, ix0, obj->tau);
     }

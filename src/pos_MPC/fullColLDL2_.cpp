@@ -10,7 +10,7 @@
 
 // Include files
 #include "fullColLDL2_.h"
-#include "PositionMPCStepFunction_internal_types.h"
+#include "MPCStepFunction_internal_types.h"
 #include "rt_nonfinite.h"
 #include <cmath>
 
@@ -29,7 +29,7 @@ void fullColLDL2_(c_struct_T *obj, int LD_offset, int NColsRemain,
     int LD_diagOffset;
     int i;
     int subMatrixDim;
-    LD_diagOffset = (LD_offset + 241 * k) - 1;
+    LD_diagOffset = (LD_offset + 301 * k) - 1;
     if (std::abs(obj->FMat[LD_diagOffset]) <= obj->regTol_) {
       obj->FMat[LD_diagOffset] += REG_PRIMAL;
     }
@@ -45,13 +45,13 @@ void fullColLDL2_(c_struct_T *obj, int LD_offset, int NColsRemain,
           double temp;
           int i1;
           temp = obj->workspace_[j] * alpha1;
-          i = jA + 242;
+          i = jA + 302;
           i1 = subMatrixDim + jA;
-          for (int ijA{i}; ijA <= i1 + 242; ijA++) {
-            obj->FMat[ijA - 1] += obj->workspace_[(ijA - jA) - 242] * temp;
+          for (int ijA{i}; ijA <= i1 + 302; ijA++) {
+            obj->FMat[ijA - 1] += obj->workspace_[(ijA - jA) - 302] * temp;
           }
         }
-        jA += 240;
+        jA += 300;
       }
     }
     for (jA = 0; jA <= subMatrixDim; jA++) {
@@ -59,7 +59,7 @@ void fullColLDL2_(c_struct_T *obj, int LD_offset, int NColsRemain,
       obj->FMat[i] /= obj->FMat[LD_diagOffset];
     }
   }
-  jA = (LD_offset + 241 * (NColsRemain - 1)) - 1;
+  jA = (LD_offset + 301 * (NColsRemain - 1)) - 1;
   if (std::abs(obj->FMat[jA]) <= obj->regTol_) {
     obj->FMat[jA] += REG_PRIMAL;
   }

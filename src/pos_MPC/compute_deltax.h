@@ -20,9 +20,9 @@
 namespace pos_MPC {
 struct struct_T;
 
-struct f_struct_T;
+struct e_struct_T;
 
-struct g_struct_T;
+struct f_struct_T;
 
 struct c_struct_T;
 
@@ -36,8 +36,8 @@ namespace coder {
 namespace optim {
 namespace coder {
 namespace qpactiveset {
-void compute_deltax(const double H[25600], struct_T *solution,
-                    f_struct_T *memspace, const g_struct_T *qrmanager,
+void compute_deltax(const double H[32400], struct_T *solution,
+                    e_struct_T *memspace, const f_struct_T *qrmanager,
                     c_struct_T *cholmanager, const b_struct_T *objective);
 
 }

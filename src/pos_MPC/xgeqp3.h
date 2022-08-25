@@ -21,7 +21,7 @@ namespace pos_MPC {
 namespace coder {
 namespace internal {
 namespace lapack {
-void xgeqp3(double b_A[134640], int m, int n, int jpvt[561], double tau[240]);
+void xgeqp3(double A[144300], int m, int n, int jpvt[481], double tau[300]);
 
 }
 } // namespace internal

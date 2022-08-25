@@ -21,10 +21,10 @@ namespace pos_MPC {
 namespace coder {
 namespace internal {
 namespace reflapack {
-void qrf(double b_A[134640], int m, int n, int nfxd, double tau[240]);
+void qrf(double A[144300], int m, int n, int nfxd, double tau[300]);
 
-void qrpf(double b_A[134640], int m, int n, int nfxd, double tau[240],
-          int jpvt[561]);
+void qrpf(double A[144300], int m, int n, int nfxd, double tau[300],
+          int jpvt[481]);
 
 } // namespace reflapack
 } // namespace internal

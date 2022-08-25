@@ -10,11 +10,10 @@
 
 // Include files
 #include "feasibleX0ForWorkingSet.h"
-#include "PositionMPCStepFunction_internal_types.h"
-#include "PositionMPCStepFunction_rtwutil.h"
+#include "MPCStepFunction_internal_types.h"
+#include "MPCStepFunction_rtwutil.h"
 #include "computeQ_.h"
 #include "factorQR.h"
-#include "maxConstraintViolation.h"
 #include "rt_nonfinite.h"
 #include "xzgeqp3.h"
 #include <algorithm>
@@ -28,10 +27,10 @@ namespace optim {
 namespace coder {
 namespace qpactiveset {
 namespace initialize {
-boolean_T feasibleX0ForWorkingSet(double workspace[90321], double xCurrent[161],
-                                  d_struct_T *workingset, g_struct_T *qrmanager)
+boolean_T feasibleX0ForWorkingSet(double workspace[87061], double xCurrent[181],
+                                  g_struct_T *workingset, f_struct_T *qrmanager)
 {
-  static double B[90321];
+  static double B[87061];
   int mWConstr;
   int nVar;
   boolean_T nonDegenerateWset;
@@ -50,17 +49,17 @@ boolean_T feasibleX0ForWorkingSet(double workspace[90321], double xCurrent[161],
     int mLB;
     for (idx = 0; idx < mWConstr; idx++) {
       workspace[idx] = workingset->bwset[idx];
-      workspace[idx + 561] = workingset->bwset[idx];
+      workspace[idx + 481] = workingset->bwset[idx];
     }
     if (mWConstr != 0) {
-      i = 161 * (mWConstr - 1) + 1;
-      for (iAcol = 1; iAcol <= i; iAcol += 161) {
+      i = 181 * (mWConstr - 1) + 1;
+      for (iAcol = 1; iAcol <= i; iAcol += 181) {
         c = 0.0;
         i1 = (iAcol + nVar) - 1;
         for (idx = iAcol; idx <= i1; idx++) {
           c += workingset->ATwset[idx - 1] * xCurrent[idx - iAcol];
         }
-        i1 = div_nde_s32_floor(iAcol - 1, 161);
+        i1 = div_nde_s32_floor(iAcol - 1, 181);
         workspace[i1] += -c;
       }
     }
@@ -69,9 +68,9 @@ boolean_T feasibleX0ForWorkingSet(double workspace[90321], double xCurrent[161],
       qrmanager->mrows = mWConstr;
       qrmanager->ncols = nVar;
       for (mLB = 0; mLB < nVar; mLB++) {
-        iAcol = 240 * mLB;
+        iAcol = 300 * mLB;
         for (jBcol = 0; jBcol < mWConstr; jBcol++) {
-          qrmanager->QR[jBcol + iAcol] = workingset->ATwset[mLB + 161 * jBcol];
+          qrmanager->QR[jBcol + iAcol] = workingset->ATwset[mLB + 181 * jBcol];
         }
         qrmanager->jpvt[mLB] = mLB + 1;
       }
@@ -81,14 +80,14 @@ boolean_T feasibleX0ForWorkingSet(double workspace[90321], double xCurrent[161],
         i = nVar;
       }
       qrmanager->minRowCol = i;
-      std::memset(&qrmanager->tau[0], 0, 240U * sizeof(double));
+      std::memset(&qrmanager->tau[0], 0, 300U * sizeof(double));
       if (i >= 1) {
         internal::reflapack::qrf(qrmanager->QR, mWConstr, nVar, i,
                                  qrmanager->tau);
       }
       QRManager::computeQ_(qrmanager, mWConstr);
-      std::copy(&workspace[0], &workspace[90321], &B[0]);
-      for (k = 0; k <= 561; k += 561) {
+      std::copy(&workspace[0], &workspace[87061], &B[0]);
+      for (k = 0; k <= 481; k += 481) {
         i = k + 1;
         i1 = k + nVar;
         if (i <= i1) {
@@ -96,7 +95,7 @@ boolean_T feasibleX0ForWorkingSet(double workspace[90321], double xCurrent[161],
         }
       }
       jBcol = -1;
-      for (k = 0; k <= 561; k += 561) {
+      for (k = 0; k <= 481; k += 481) {
         ar = -1;
         i = k + 1;
         i1 = k + nVar;
@@ -106,14 +105,14 @@ boolean_T feasibleX0ForWorkingSet(double workspace[90321], double xCurrent[161],
             c += qrmanager->Q[(iAcol + ar) + 1] * B[(iAcol + jBcol) + 1];
           }
           workspace[ic - 1] += c;
-          ar += 240;
+          ar += 300;
         }
-        jBcol += 561;
+        jBcol += 481;
       }
       for (idx = 0; idx < 2; idx++) {
-        jBcol = 561 * idx - 1;
+        jBcol = 481 * idx - 1;
         for (k = nVar; k >= 1; k--) {
-          iAcol = 240 * (k - 1) - 1;
+          iAcol = 300 * (k - 1) - 1;
           i = k + jBcol;
           c = workspace[i];
           if (c != 0.0) {
@@ -129,9 +128,9 @@ boolean_T feasibleX0ForWorkingSet(double workspace[90321], double xCurrent[161],
       QRManager::factorQR(qrmanager, workingset->ATwset, nVar, mWConstr);
       QRManager::computeQ_(qrmanager, qrmanager->minRowCol);
       for (idx = 0; idx < 2; idx++) {
-        jBcol = 561 * idx;
+        jBcol = 481 * idx;
         for (ar = 0; ar < mWConstr; ar++) {
-          iAcol = 240 * ar;
+          iAcol = 300 * ar;
           mLB = ar + jBcol;
           c = workspace[mLB];
           for (k = 0; k < ar; k++) {
@@ -140,8 +139,8 @@ boolean_T feasibleX0ForWorkingSet(double workspace[90321], double xCurrent[161],
           workspace[mLB] = c / qrmanager->QR[ar + iAcol];
         }
       }
-      std::copy(&workspace[0], &workspace[90321], &B[0]);
-      for (k = 0; k <= 561; k += 561) {
+      std::copy(&workspace[0], &workspace[87061], &B[0]);
+      for (k = 0; k <= 481; k += 481) {
         i = k + 1;
         i1 = k + nVar;
         if (i <= i1) {
@@ -149,7 +148,7 @@ boolean_T feasibleX0ForWorkingSet(double workspace[90321], double xCurrent[161],
         }
       }
       jBcol = 0;
-      for (k = 0; k <= 561; k += 561) {
+      for (k = 0; k <= 481; k += 481) {
         ar = -1;
         i = jBcol + 1;
         i1 = jBcol + mWConstr;
@@ -159,9 +158,9 @@ boolean_T feasibleX0ForWorkingSet(double workspace[90321], double xCurrent[161],
           for (int ic{iAcol}; ic <= mLB; ic++) {
             workspace[ic - 1] += B[idx - 1] * qrmanager->Q[(ar + ic) - k];
           }
-          ar += 240;
+          ar += 300;
         }
-        jBcol += 561;
+        jBcol += 481;
       }
     }
     idx = 0;
@@ -173,7 +172,7 @@ boolean_T feasibleX0ForWorkingSet(double workspace[90321], double xCurrent[161],
           nonDegenerateWset = false;
           exitg1 = 1;
         } else {
-          c = workspace[idx + 561];
+          c = workspace[idx + 481];
           if (std::isinf(c) || std::isnan(c)) {
             nonDegenerateWset = false;
             exitg1 = 1;
@@ -182,6 +181,7 @@ boolean_T feasibleX0ForWorkingSet(double workspace[90321], double xCurrent[161],
           }
         }
       } else {
+        double b_v;
         double v;
         iAcol = nVar - 1;
         for (k = 0; k <= iAcol; k++) {
@@ -193,79 +193,44 @@ boolean_T feasibleX0ForWorkingSet(double workspace[90321], double xCurrent[161],
         switch (workingset->probType) {
         case 2:
           v = 0.0;
-          for (k = 0; k < 160; k++) {
-            workingset->maxConstrWorkspace[k] = workingset->bineq[k];
-            workingset->maxConstrWorkspace[k] =
-                -workingset->maxConstrWorkspace[k];
-          }
-          for (iAcol = 0; iAcol <= 25599; iAcol += 161) {
-            c = 0.0;
-            i = iAcol + 160;
-            for (idx = iAcol + 1; idx <= i; idx++) {
-              c += workingset->Aineq[idx - 1] * workspace[(idx - iAcol) - 1];
-            }
-            i = div_nde_s32_floor(iAcol, 161);
-            workingset->maxConstrWorkspace[i] += c;
-          }
-          for (idx = 0; idx < 160; idx++) {
-            workingset->maxConstrWorkspace[idx] -= workspace[idx + 160];
-            v = std::fmax(v, workingset->maxConstrWorkspace[idx]);
-          }
-          for (k = 0; k < 80; k++) {
+          for (k = 0; k < 120; k++) {
             workingset->maxConstrWorkspace[k] = workingset->beq[k];
             workingset->maxConstrWorkspace[k] =
                 -workingset->maxConstrWorkspace[k];
           }
-          for (iAcol = 0; iAcol <= 12719; iAcol += 161) {
+          for (iAcol = 0; iAcol <= 21539; iAcol += 181) {
             c = 0.0;
-            i = iAcol + 160;
+            i = iAcol + 180;
             for (idx = iAcol + 1; idx <= i; idx++) {
               c += workingset->Aeq[idx - 1] * workspace[(idx - iAcol) - 1];
             }
-            i = div_nde_s32_floor(iAcol, 161);
+            i = div_nde_s32_floor(iAcol, 181);
             workingset->maxConstrWorkspace[i] += c;
           }
-          for (idx = 0; idx < 80; idx++) {
+          for (idx = 0; idx < 120; idx++) {
             workingset->maxConstrWorkspace[idx] =
-                (workingset->maxConstrWorkspace[idx] - workspace[idx + 320]) +
-                workspace[idx + 400];
+                (workingset->maxConstrWorkspace[idx] - workspace[idx + 180]) +
+                workspace[idx + 300];
             v = std::fmax(v, std::abs(workingset->maxConstrWorkspace[idx]));
           }
           break;
         default:
           v = 0.0;
-          for (k = 0; k < 160; k++) {
-            workingset->maxConstrWorkspace[k] = workingset->bineq[k];
-            workingset->maxConstrWorkspace[k] =
-                -workingset->maxConstrWorkspace[k];
-          }
-          for (iAcol = 0; iAcol <= 25599; iAcol += 161) {
-            c = 0.0;
-            i = iAcol + workingset->nVar;
-            for (idx = iAcol + 1; idx <= i; idx++) {
-              c += workingset->Aineq[idx - 1] * workspace[(idx - iAcol) - 1];
-            }
-            i = div_nde_s32_floor(iAcol, 161);
-            workingset->maxConstrWorkspace[i] += c;
-          }
-          for (idx = 0; idx < 160; idx++) {
-            v = std::fmax(v, workingset->maxConstrWorkspace[idx]);
-          }
-          for (k = 0; k < 80; k++) {
+          for (k = 0; k < 120; k++) {
             workingset->maxConstrWorkspace[k] = workingset->beq[k];
             workingset->maxConstrWorkspace[k] =
                 -workingset->maxConstrWorkspace[k];
           }
-          for (iAcol = 0; iAcol <= 12719; iAcol += 161) {
+          for (iAcol = 0; iAcol <= 21539; iAcol += 181) {
             c = 0.0;
             i = iAcol + workingset->nVar;
             for (idx = iAcol + 1; idx <= i; idx++) {
               c += workingset->Aeq[idx - 1] * workspace[(idx - iAcol) - 1];
             }
-            i = div_nde_s32_floor(iAcol, 161);
+            i = div_nde_s32_floor(iAcol, 181);
             workingset->maxConstrWorkspace[i] += c;
           }
-          for (idx = 0; idx < 80; idx++) {
+          for (idx = 0; idx < 120; idx++) {
             v = std::fmax(v, std::abs(workingset->maxConstrWorkspace[idx]));
           }
           break;
@@ -289,13 +254,81 @@ boolean_T feasibleX0ForWorkingSet(double workspace[90321], double xCurrent[161],
                             workingset->ub[workingset->indexFixed[idx] - 1]));
           }
         }
-        c = WorkingSet::maxConstraintViolation(workingset, workspace);
-        if ((v <= 2.2204460492503131E-16) || (v < c)) {
+        mLB = workingset->sizes[3];
+        jBcol = workingset->sizes[4];
+        ar = workingset->sizes[0];
+        switch (workingset->probType) {
+        case 2:
+          b_v = 0.0;
+          for (k = 0; k < 120; k++) {
+            workingset->maxConstrWorkspace[k] = workingset->beq[k];
+            workingset->maxConstrWorkspace[k] =
+                -workingset->maxConstrWorkspace[k];
+          }
+          for (iAcol = 0; iAcol <= 21539; iAcol += 181) {
+            c = 0.0;
+            i = iAcol + 180;
+            for (idx = iAcol + 1; idx <= i; idx++) {
+              c += workingset->Aeq[idx - 1] * workspace[(idx - iAcol) + 480];
+            }
+            i = div_nde_s32_floor(iAcol, 181);
+            workingset->maxConstrWorkspace[i] += c;
+          }
+          for (idx = 0; idx < 120; idx++) {
+            workingset->maxConstrWorkspace[idx] =
+                (workingset->maxConstrWorkspace[idx] - workspace[idx + 661]) +
+                workspace[idx + 781];
+            b_v = std::fmax(b_v, std::abs(workingset->maxConstrWorkspace[idx]));
+          }
+          break;
+        default:
+          b_v = 0.0;
+          for (k = 0; k < 120; k++) {
+            workingset->maxConstrWorkspace[k] = workingset->beq[k];
+            workingset->maxConstrWorkspace[k] =
+                -workingset->maxConstrWorkspace[k];
+          }
+          for (iAcol = 0; iAcol <= 21539; iAcol += 181) {
+            c = 0.0;
+            i = iAcol + workingset->nVar;
+            for (idx = iAcol + 1; idx <= i; idx++) {
+              c += workingset->Aeq[idx - 1] * workspace[(idx - iAcol) + 480];
+            }
+            i = div_nde_s32_floor(iAcol, 181);
+            workingset->maxConstrWorkspace[i] += c;
+          }
+          for (idx = 0; idx < 120; idx++) {
+            b_v = std::fmax(b_v, std::abs(workingset->maxConstrWorkspace[idx]));
+          }
+          break;
+        }
+        if (workingset->sizes[3] > 0) {
+          for (idx = 0; idx < mLB; idx++) {
+            iAcol = workingset->indexLB[idx];
+            b_v = std::fmax(b_v, -workspace[iAcol + 480] -
+                                     workingset->lb[iAcol - 1]);
+          }
+        }
+        if (workingset->sizes[4] > 0) {
+          for (idx = 0; idx < jBcol; idx++) {
+            iAcol = workingset->indexUB[idx];
+            b_v = std::fmax(b_v,
+                            workspace[iAcol + 480] - workingset->ub[iAcol - 1]);
+          }
+        }
+        if (workingset->sizes[0] > 0) {
+          for (idx = 0; idx < ar; idx++) {
+            b_v = std::fmax(
+                b_v, std::abs(workspace[workingset->indexFixed[idx] + 480] -
+                              workingset->ub[workingset->indexFixed[idx] - 1]));
+          }
+        }
+        if ((v <= 2.2204460492503131E-16) || (v < b_v)) {
           if (0 <= nVar - 1) {
             std::copy(&workspace[0], &workspace[nVar], &xCurrent[0]);
           }
         } else if (0 <= nVar - 1) {
-          std::copy(&workspace[561], &workspace[561 + nVar], &xCurrent[0]);
+          std::copy(&workspace[481], &workspace[481 + nVar], &xCurrent[0]);
         }
         exitg1 = 1;
       }

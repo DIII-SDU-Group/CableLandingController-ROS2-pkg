@@ -21,7 +21,7 @@ namespace pos_MPC {
 namespace coder {
 namespace internal {
 namespace reflapack {
-double xzlarfg(int n, double *alpha1, double x[134640], int ix0);
+double xzlarfg(int n, double *alpha1, double x[144300], int ix0);
 
 }
 } // namespace internal
