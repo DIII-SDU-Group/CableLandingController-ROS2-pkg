@@ -2261,13 +2261,13 @@ void CableLandingController::threadFunctionPositionMPC(double *x, double *u, dou
 
 	} 
 
-    for (int i = 0; i < N; i++) {
-      std::cout << "[";
-      for (int j = 0; j < 6; j++) std::cout << " \t" << std::to_string(Info.Yopt[j*(N+1)+(i+1)]);
-      std::cout << "\t]\n";
-    }
+    //for (int i = 0; i < N; i++) {
+    //  std::cout << "[";
+    //  for (int j = 0; j < 6; j++) std::cout << " \t" << std::to_string(Info.Yopt[j*(N+1)+(i+1)]);
+    //  std::cout << "\t]\n";
+    //}
 
-    std::cout << "\n\n\n";
+    //std::cout << "\n\n\n";
 
     // for (int i = 0; i < 20; i++) {
 
