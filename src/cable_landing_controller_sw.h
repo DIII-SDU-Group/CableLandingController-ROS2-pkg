@@ -49,8 +49,12 @@
 #include "geometry.h"
 #include "blocking_queue.h"
 
-#include "MPCStepFunction.h"
+//#include "MPCStepFunction.h"
 //#include "PositionMPCStepFunction.h"
+//#include "rt_nonfinite.h"
+#include "mpcmoveCodeGeneration.h"
+#include "mpcmoveCodeGeneration_terminate.h"
+#include "mpcmoveCodeGeneration_types.h"
 #include "rt_nonfinite.h"
 
 /*****************************************************************************/
@@ -277,8 +281,9 @@ private:
 	rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr planned_target_pub_;
 
 	std::thread MPC_thread_;
-	double MPC_x_[9];
-	double MPC_planned_traj_[180];
+	double MPC_u_[3];
+	double MPC_x_[6];
+	double MPC_planned_traj_[120];
 
 	// General member methods:
 	void stateMachineCallback();
@@ -316,7 +321,7 @@ private:
 	state4_t loadTargetCableState();
 
 	state4_t stepPositionMPC(state4_t vehicle_state, state4_t target_state, bool reset);
-	void threadFunctionPositionMPC(double *x, double *planned_traj, double *target, 
+	void threadFunctionPositionMPC(double *x, double *u, double *planned_traj, double *target, 
 		int reset_target, int reset_trajectory, int reset_bounds, int reset_weights);
 
 	state4_t stepCableLandingMPC(state4_t vehicle_state, state4_t target_state, bool reset);

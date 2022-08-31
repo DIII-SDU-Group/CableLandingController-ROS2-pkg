@@ -11,21 +11,24 @@ cable_landing_controller:
       position_MPC_vz_max: 2.
       position_MPC_vpsi_max: 1.56
       position_MPC_ax_max: 1.0
-      position_MPC_ay_max: 2.0
-      position_MPC_az_max: 2.0
+      position_MPC_ay_max: 1.0
+      position_MPC_az_max: 1.0
       position_MPC_apsi_max: 1.56
-      position_MPC_wx: 10.
-      position_MPC_wy: 10.
-      position_MPC_wz: 10.
+      position_MPC_wx: 1.
+      position_MPC_wy: 1.
+      position_MPC_wz: 1.
       position_MPC_wpsi: 1.
-      position_MPC_wvx: 0.1
-      position_MPC_wvy: 0.1
-      position_MPC_wvz: 0.1
+      position_MPC_wvx: 1.0
+      position_MPC_wvy: 1.0
+      position_MPC_wvz: 1.0
       position_MPC_wvpsi: 1.
-      position_MPC_wax: 0.1
-      position_MPC_way: 0.1
-      position_MPC_waz: 0.1
+      position_MPC_wax: 0.01
+      position_MPC_way: 0.01
+      position_MPC_waz: 0.01
       position_MPC_wapsi: 0.
+      position_MPC_wjx: 0.1
+      position_MPC_wjy: 0.1
+      position_MPC_wjz: 0.1
       position_MPC_wx_last: 10.
       position_MPC_wy_last: 10.
       position_MPC_wz_last: 10.

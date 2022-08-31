@@ -787,10 +787,10 @@ void CableLandingController::stateMachineCallback() {
 	bool offboard = isOffboard();
 	bool armed = isArmed();
 
-	//if (offboard)
-		// //LOG_INFO("offboard");
-	//else
-		// //LOG_INFO("not offboard");
+	// if (offboard)
+	// 	LOG_INFO("offboard");
+	// else
+	// 	LOG_INFO("not offboard");
 
 	//if (armed)
 	//	//LOG_INFO("armed");
@@ -1304,6 +1304,7 @@ void CableLandingController::stateMachineCallback() {
 			rejectPendingRequest();
 
 			set_point = stepPositionMPC(veh_state, fixed_reference, false);
+			// set_point = fixed_reference;
 
 		}
 
@@ -1921,8 +1922,11 @@ state4_t CableLandingController::stepPositionMPC(state4_t vehicle_state, state4_
 
 	static double dt;
 
-	double planned_traj[180];
-	double x[9];
+	static double planned_traj[120];
+	static double x[6];
+	static double u[3];
+
+	// static double prev_x[6];
 
 	static double target[3];
 
@@ -1966,20 +1970,22 @@ state4_t CableLandingController::stepPositionMPC(state4_t vehicle_state, state4_
 		for (int i = 0; i < 20; i++) {
 			for (int j = 0; j < 3; j++) {
 
-				planned_traj[i*9+j] = vehicle_state(j);
+				planned_traj[i*6+j] = vehicle_state(j);
 
 			}
 
-			for (int j = 3; j < 9; j++) {
+			for (int j = 3; j < 6; j++) {
 
-				planned_traj[i*9+j] = 0;
+				planned_traj[i*6+j] = 0;
 
 			}
 		}
 
-		for (int i = 0; i < 9; i++) x[i] = planned_traj[i];
+		for (int i = 0; i < 6; i++) x[i] = planned_traj[i];
+		// for (int i = 0; i < 6; i++) prev_x[i] = planned_traj[i];
 
 	};
+
 
 	if (first) {
 
@@ -1995,29 +2001,29 @@ state4_t CableLandingController::stepPositionMPC(state4_t vehicle_state, state4_
 
 		} else {
 
-			for (int i = 0; i < 180; i++) planned_traj[i] = MPC_planned_traj_[i];
-			for (int i = 0; i < 9; i++) x[i] = MPC_x_[i];
+			// for (int i = 0; i < 6; i++) prev_x[i] = x[i];
+
+			for (int i = 0; i < 120; i++) planned_traj[i] = MPC_planned_traj_[i];
+			for (int i = 0; i < 6; i++) x[i] = MPC_x_[i];
+			for (int i = 0; i < 3; i++) u[i] = MPC_u_[i];
 
 		}
 	}
+
+	for (int i = 0; i < 3; i++) MPC_x_[i] = vehicle_state(i);
+	for (int i = 3; i < 6; i++) MPC_x_[i] = vehicle_state(i+1);
+
+	prev_vehicle_state = vehicle_state;
+
+	MPC_thread_ = std::thread( &CableLandingController::threadFunctionPositionMPC, this,
+					MPC_x_, MPC_u_, MPC_planned_traj_, target, reset_target, reset_trajectory, reset_bounds, reset_weights);
+
 
 	if (reset_trajectory) {
 
 		this->get_parameter("position_MPC_dt", dt);
 
 	}
-
-	for (int i = 0; i < 3; i++) MPC_x_[i] = vehicle_state(i);
-	for (int i = 3; i < 6; i++) MPC_x_[i] = vehicle_state(i+1);
-	for (int i = 6; i < 9; i++) MPC_x_[i] = x[i];
-	//MPC_x_[6] = (vehicle_state(4) - prev_vehicle_state(4)) / dt;
-	//MPC_x_[7] = (vehicle_state(5) - prev_vehicle_state(5)) / dt;
-	//MPC_x_[8] = (vehicle_state(6) - prev_vehicle_state(6)) / dt;
-
-	prev_vehicle_state = vehicle_state;
-
-	MPC_thread_ = std::thread( &CableLandingController::threadFunctionPositionMPC, this,
-					MPC_x_, MPC_planned_traj_, target, reset_target, reset_trajectory, reset_bounds, reset_weights);
 
 	// Output:
 
@@ -2040,22 +2046,48 @@ state4_t CableLandingController::stepPositionMPC(state4_t vehicle_state, state4_
 
 		}
 
+		planned_trajectory_.resize(0);
+
 		for (int i = 0; i < 20; i++) {
 
 			state4_t tmp_state;
-			for (int j = 0; j < 3; j++) tmp_state(j) = planned_traj[i*9+j];
-			for (int j = 3; j < 6; j++) tmp_state(j+1) = planned_traj[i*9+j];
-			for (int j = 6; j < 9; j++) tmp_state(j+2) = planned_traj[i*9+j];
+			for (int j = 0; j < 3; j++) tmp_state(j) = planned_traj[i*6+j];
+
+		// std::cout << " \ttraj = [";
+		// for (int j = 0; j < 3; j++) std::cout << " \t" << std::to_string(MPC_planned_traj_[i*6+j]);
+		// std::cout << "\t]\n";
+
+			for (int j = 3; j < 6; j++) tmp_state(j+1) = planned_traj[i*6+j];
+			//for (int j = 6; j < 9; j++) tmp_state(j+2) = planned_traj[i*9+j];
 
 			tmp_state(3) = target_state(3);
 			tmp_state(7) = 0;
 			tmp_state(11) = 0;
 
-			planned_trajectory_[i] = tmp_state;
+
+			//planned_trajectory_[i] = tmp_state;
+
+			planned_trajectory_.push_back(tmp_state);
 
 		}
 
-		set_point = planned_trajectory_[0];
+    // std::cout << "\n";
+    // std::cout << "\n";
+    // std::cout << "\n";
+    // std::cout << "\n";
+    // std::cout << "\n";
+    // std::cout << "\n";
+    // std::cout << "\n";
+    // std::cout << "\n";
+    // std::cout << "\n";
+    // std::cout << "\n";
+
+
+		//set_point = planned_trajectory_[0];
+
+		for (int i = 0; i < 3; i++) set_point(i) = x[i];
+		for (int i = 0; i < 3; i++) set_point(i+4) = x[i+3];
+		for (int i = 0; i < 3; i++) set_point(i+8) = u[i];
 
 	} planned_trajectory_mutex_.unlock();
 
@@ -2066,7 +2098,7 @@ state4_t CableLandingController::stepPositionMPC(state4_t vehicle_state, state4_
 
 }
 
-void CableLandingController::threadFunctionPositionMPC(double *x, double *planned_traj, double *target, 
+void CableLandingController::threadFunctionPositionMPC(double *x, double *u, double *planned_traj, double *target, 
 		int reset_target, int reset_trajectory, int reset_bounds, int reset_weights) {
 
 	static double dt;
@@ -2091,17 +2123,15 @@ void CableLandingController::threadFunctionPositionMPC(double *x, double *planne
 	static double way;
 	static double waz;
 
-	static double wx_last;
-	static double wy_last;
-	static double wz_last;
+	static double wjx;
+	static double wjy;
+	static double wjz;
 
-	static double wvx_last;
-	static double wvy_last;
-	static double wvz_last;
+	const int N = 20;
 
-	static double wax_last;
-	static double way_last;
-	static double waz_last;
+	static pos_MPC::struct10_T Info;
+	static pos_MPC::struct4_T mpcmovestate;
+	static pos_MPC::struct5_T mpconlinedata;
 
 	if (reset_trajectory) {
 
@@ -2135,29 +2165,240 @@ void CableLandingController::threadFunctionPositionMPC(double *x, double *planne
 		this->get_parameter("position_MPC_way", way);
 		this->get_parameter("position_MPC_waz", waz);
 
-		this->get_parameter("position_MPC_wx_last", wx_last);
-		this->get_parameter("position_MPC_wy_last", wy_last);
-		this->get_parameter("position_MPC_wz_last", wz_last);
-
-		this->get_parameter("position_MPC_wvx_last", wvx_last);
-		this->get_parameter("position_MPC_wvy_last", wvy_last);
-		this->get_parameter("position_MPC_wvz_last", wvz_last);
-
-		this->get_parameter("position_MPC_wax_last", wax_last);
-		this->get_parameter("position_MPC_way_last", way_last);
-		this->get_parameter("position_MPC_waz_last", waz_last);
+		this->get_parameter("position_MPC_wjx", wjx);
+		this->get_parameter("position_MPC_wjy", wjy);
+		this->get_parameter("position_MPC_wjz", wjz);
 
 	}
 
-	pos_MPC::MPCStepFunction(
-		x, target, dt, 
-		vx_max, vy_max, vz_max, ax_max, ay_max, az_max, 
-		wx, wy, wz, wvx, wvy, wvz, wax,way,waz,
-		wx_last, wy_last, wz_last,  wvx_last, wvy_last, wvz_last, wax_last,way_last,waz_last, 
-		reset_target, reset_trajectory, reset_bounds, reset_weights, 
-		planned_traj);
+	if (reset_trajectory) {
+
+		for(int i = 0; i < 81; i++) mpcmovestate.Covariance[i] = 0;
+		for(int i=0; i < 3; i++) mpcmovestate.Disturbance[i] = 0;
+		for(int i = 0; i < 228; i++) mpcmovestate.iA[i] = 0;
+		for(int i=0; i < 3; i++) mpcmovestate.LastMove[i] = 0;
+		for(int i=0; i < 6; i++) mpcmovestate.Plant[i] = x[i];
+
+	}
+
+	if (reset_bounds) {
+
+		mpconlinedata.limits.MVMax[0] = ax_max;
+		mpconlinedata.limits.MVMax[1] = ay_max;
+		mpconlinedata.limits.MVMax[2] = az_max;
+
+		mpconlinedata.limits.MVMin[0] = -ax_max;
+		mpconlinedata.limits.MVMin[1] = -ay_max;
+		mpconlinedata.limits.MVMin[2] = -az_max;
+
+		mpconlinedata.limits.OutputMax[0] = 100000;
+		mpconlinedata.limits.OutputMax[1] = 100000;
+		mpconlinedata.limits.OutputMax[2] = 100000;
+		mpconlinedata.limits.OutputMax[3] = vx_max;
+		mpconlinedata.limits.OutputMax[4] = vy_max;
+		mpconlinedata.limits.OutputMax[5] = vz_max;
+
+		mpconlinedata.limits.OutputMin[0] = -100000;
+		mpconlinedata.limits.OutputMin[1] = -100000;
+		mpconlinedata.limits.OutputMin[2] = -100000;
+		mpconlinedata.limits.OutputMin[3] = -vx_max;
+		mpconlinedata.limits.OutputMin[4] = -vy_max;
+		mpconlinedata.limits.OutputMin[5] = -vz_max;
+
+	}
+
+	if (reset_target) {
+
+		for (int i = 0; i < 3; i++) {
+
+			mpconlinedata.signals.ref[i] = target[i];
+			mpconlinedata.signals.ref[i+3] = 0;
+
+		}
+	}
+
+	if (reset_weights) {
+
+		mpconlinedata.weights.du[0] = wjx;
+		mpconlinedata.weights.du[1] = wjy;
+		mpconlinedata.weights.du[2] = wjz;
+
+		mpconlinedata.weights.u[0] = wax;
+		mpconlinedata.weights.u[1] = way;
+		mpconlinedata.weights.u[2] = waz;
+
+		mpconlinedata.weights.y[0] = wx;
+		mpconlinedata.weights.y[1] = wy;
+		mpconlinedata.weights.y[2] = wz;
+		mpconlinedata.weights.y[3] = wvx;
+		mpconlinedata.weights.y[4] = wvy;
+		mpconlinedata.weights.y[5] = wvz;
+
+	}
+
+	for(int i = 0; i < 6; i++) mpconlinedata.signals.ym[i] = x[i];
+
+    //std::cout << " \tx = [";
+    //for (int i = 0; i < 6; i++) std::cout << " \t" << std::to_string(x[i]);
+    //std::cout << "\t]\n";
+
+	pos_MPC::coder::mpcmoveCodeGeneration(&mpcmovestate, &mpconlinedata, u, &Info);
+
+    //std::cout << " \tu = [";
+    //for (int i = 0; i < 3; i++) std::cout << " \t" << std::to_string(u[i]);
+    //std::cout << "\t]\n";
+
+    //std::cout << " \ttraj = [";
+    //for (int i = 0; i < 6; i++) std::cout << " \t" << std::to_string(Info.Yopt[i]);
+    //std::cout << "\t]\n";
+    //std::cout << "\n";
+    //std::cout << "\n";
+
+	for (int j = 0; j < 6; j++) x[j] = Info.Yopt[j*(N+1)+1];
+	for (int i = 0; i < N; i++) {
+
+		for (int j = 0; j < 6; j++) planned_traj[i*6+j] = Info.Yopt[j*(N+1)+(i+1)];
+
+	} 
+
+    for (int i = 0; i < N; i++) {
+      std::cout << "[";
+      for (int j = 0; j < 6; j++) std::cout << " \t" << std::to_string(Info.Yopt[j*(N+1)+(i+1)]);
+      std::cout << "\t]\n";
+    }
+
+    std::cout << "\n\n\n";
+
+    // for (int i = 0; i < 20; i++) {
+
+	// 	std::cout << " \ttrajaaaa = [";
+	// 	for (int j = 0; j < 6; j++) std::cout << " \t" << std::to_string(Info.Yopt[i*6+j]);
+	// 	std::cout << "\t]\n";
+
+	// }
+    // std::cout << "\n";
+    // std::cout << "\n";
+    // std::cout << "\n";
+    // std::cout << "\n";
+    // std::cout << "\n";
+    // std::cout << "\n";
+    // std::cout << "\n";
+    // std::cout << "\n";
+    // std::cout << "\n";
+    // std::cout << "\n";
+
+    // for (int i = 0; i < 20; i++) {
+
+	// 	std::cout << " \ttrajhhh = [";
+	// 	for (int j = 0; j < 6; j++) std::cout << " \t" << std::to_string(planned_traj[i*6+j]);
+	// 	std::cout << "\t]\n";
+
+	// }
+    // std::cout << "\n";
+    // std::cout << "\n";
+    // std::cout << "\n";
+    // std::cout << "\n";
+    // std::cout << "\n";
+    // std::cout << "\n";
+    // std::cout << "\n";
+    // std::cout << "\n";
+    // std::cout << "\n";
+    // std::cout << "\n";
 
 }
+
+// void CableLandingController::threadFunctionPositionMPC(double *x, double *planned_traj, double *target, 
+// 		int reset_target, int reset_trajectory, int reset_bounds, int reset_weights) {
+
+// 	static double dt;
+
+// 	static double vx_max;
+// 	static double vy_max;
+// 	static double vz_max;
+
+// 	static double ax_max;
+// 	static double ay_max;
+// 	static double az_max;
+
+// 	static double wx;
+// 	static double wy;
+// 	static double wz;
+
+// 	static double wvx;
+// 	static double wvy;
+// 	static double wvz;
+
+// 	static double wax;
+// 	static double way;
+// 	static double waz;
+
+// 	static double wx_last;
+// 	static double wy_last;
+// 	static double wz_last;
+
+// 	static double wvx_last;
+// 	static double wvy_last;
+// 	static double wvz_last;
+
+// 	static double wax_last;
+// 	static double way_last;
+// 	static double waz_last;
+
+// 	if (reset_trajectory) {
+
+// 		this->get_parameter("position_MPC_dt", dt);
+
+// 	}
+
+// 	if (reset_bounds) {
+
+// 		this->get_parameter("position_MPC_vx_max", vx_max);
+// 		this->get_parameter("position_MPC_vy_max", vy_max);
+// 		this->get_parameter("position_MPC_vz_max", vz_max);
+
+// 		this->get_parameter("position_MPC_ax_max", ax_max);
+// 		this->get_parameter("position_MPC_ay_max", ay_max);
+// 		this->get_parameter("position_MPC_az_max", az_max);
+
+// 	}
+
+// 	if (reset_weights) {
+
+// 		this->get_parameter("position_MPC_wx", wx);
+// 		this->get_parameter("position_MPC_wy", wy);
+// 		this->get_parameter("position_MPC_wz", wz);
+
+// 		this->get_parameter("position_MPC_wvx", wvx);
+// 		this->get_parameter("position_MPC_wvy", wvy);
+// 		this->get_parameter("position_MPC_wvz", wvz);
+
+// 		this->get_parameter("position_MPC_wax", wax);
+// 		this->get_parameter("position_MPC_way", way);
+// 		this->get_parameter("position_MPC_waz", waz);
+
+// 		this->get_parameter("position_MPC_wx_last", wx_last);
+// 		this->get_parameter("position_MPC_wy_last", wy_last);
+// 		this->get_parameter("position_MPC_wz_last", wz_last);
+
+// 		this->get_parameter("position_MPC_wvx_last", wvx_last);
+// 		this->get_parameter("position_MPC_wvy_last", wvy_last);
+// 		this->get_parameter("position_MPC_wvz_last", wvz_last);
+
+// 		this->get_parameter("position_MPC_wax_last", wax_last);
+// 		this->get_parameter("position_MPC_way_last", way_last);
+// 		this->get_parameter("position_MPC_waz_last", waz_last);
+
+// 	}
+
+// 	pos_MPC::MPCStepFunction(
+// 		x, target, dt, 
+// 		vx_max, vy_max, vz_max, ax_max, ay_max, az_max, 
+// 		wx, wy, wz, wvx, wvy, wvz, wax,way,waz,
+// 		wx_last, wy_last, wz_last,  wvx_last, wvy_last, wvz_last, wax_last,way_last,waz_last, 
+// 		reset_target, reset_trajectory, reset_bounds, reset_weights, 
+// 		planned_traj);
+
+// }
 
 state4_t CableLandingController::stepCableLandingMPC(state4_t vehicle_state, state4_t target_state, bool reset) {
 
