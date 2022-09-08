@@ -23,11 +23,11 @@ CableDrumController::CableDrumController(const std::string & node_name,
 
         RCLCPP_FATAL(this->get_logger(), "CableDrumBridge device not found!");
 
-    } else if (status = XST_OPEN_DEVICE_FAILED) {
+    } else if (status == XST_OPEN_DEVICE_FAILED) {
 
         RCLCPP_FATAL(this->get_logger(), "CableDrumBridge open device failed!");
 
-    } else if (status = XST_SUCCESS) {
+    } else if (status == XST_SUCCESS) {
 
         RCLCPP_INFO(this->get_logger(), "CableDrumBridge device opened successfully");
 
