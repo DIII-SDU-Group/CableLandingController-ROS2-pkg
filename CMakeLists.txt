@@ -18,6 +18,9 @@ endif()
 include_directories(src/matlab_MPC)
 link_directories(src/matlab_MPC)
 
+include_directories(src/CableDrumBridge/src)
+link_directories(src/CableDrumBridge/src)
+
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(ament_cmake_python REQUIRED)
@@ -67,6 +70,20 @@ ament_target_dependencies(trajectory_controller
   tf2_geometry_msgs
 )
 install(TARGETS trajectory_controller DESTINATION lib/${PROJECT_NAME})
+
+add_executable(cable_drum_controller
+  src/cable_drum_controller.cpp
+  src/CableDrumBridge/src/xcabledrumbridge.c
+  src/CableDrumBridge/src/xcabledrumbridge_linux.c
+)
+ament_target_dependencies(cable_drum_controller
+  rclcpp
+  iii_interfaces
+  std_msgs
+  tf2
+  tf2_ros
+)
+install(TARGETS cable_drum_controller DESTINATION lib/${PROJECT_NAME})
 
 # Install launch files
 install(DIRECTORY

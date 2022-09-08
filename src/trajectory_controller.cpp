@@ -1086,11 +1086,11 @@ void TrajectoryController::stateMachineCallback() {
 
 		} else {
 
-			rejectPendingRequest();
+			rejectPendingRequest();/*****************************************************************************/
+// Main
+/*****************************************************************************/
 
-			set_point = setNanVelocity(veh_state);
-
-			arm_cnt--;
+int main(int argc, char* argv[]);
 
 		}
 
@@ -1414,21 +1414,30 @@ void TrajectoryController::odometryCallback(px4_msgs::msg::VehicleOdometry::Shar
 	);
 
 	vector_t ang_vel(
-		msg->angular_velocity[0],
-		msg->angular_velocity[1],
-		msg->angular_velocity[2]
+		//msg->angular_velocity[0],
+		//msg->angular_velocity[1],
+		//msg->angular_velocity[2]
+		msg->rollspeed,
+		msg->pitchspeed,
+		msg->yawspeed
 	);
 
 	vector_t pos(
-		msg->position[0],
-		msg->position[1],
-		msg->position[2]
+		//msg->position[0],
+		//msg->position[1],
+		//msg->position[2]
+		msg->x,
+		msg->y,
+		msg->z
 	);
 
 	vector_t vel(
-		msg->velocity[0],
-		msg->velocity[1],
-		msg->velocity[2]
+		//msg->velocity[0],
+		//msg->velocity[1],
+		//msg->velocity[2]
+		msg->vx,
+		msg->vy,
+		msg->vz
 	);
 
 	odometry_mutex_.lock(); {
@@ -1640,12 +1649,20 @@ void TrajectoryController::publishTrajectorySetpoint(state4_t set_point) const {
 	msg.timestamp = timestamp_.load();
 	for (int i = 0; i < 3; i++) {
 
-		msg.position[i] = pos(i);
-		msg.velocity[i] = vel(i);
+		//msg.position[i] = pos(i);
+		//msg.velocity[i] = vel(i);
 		msg.acceleration[i] = acc(i);
 		msg.jerk[i] = NAN; //jerk(i);
 
 	}
+
+	msg.x = pos(0);
+	msg.y = pos(1);
+	msg.z = pos(2);
+
+	msg.vx = vel(0);
+	msg.vy = vel(1);
+	msg.vz = vel(2);
 
 	msg.yaw = yaw;
 	msg.yawspeed = yaw_rate;

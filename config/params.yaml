@@ -1,5 +1,5 @@
-cable_landing_controller:
-  cable_landing_controller:
+trajectory_controller:
+  trajectory_controller:
     ros__parameters:
       controller_period_ms: 100
       landed_altitude_threshold: 0.5
@@ -66,3 +66,8 @@ cable_landing_controller:
       cable_landing_MPC_wvy_last: 5.
       cable_landing_MPC_wvz_last: 5.
       cable_landing_MPC_wvpsi_last: 5.
+
+cable_drum_controller:
+  cable_drum_controller:
+    cable_drum_initial_gain: 15
+    cable_drum_initial_reference: 8
