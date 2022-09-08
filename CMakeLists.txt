@@ -36,8 +36,8 @@ find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 
-add_executable(cable_landing_controller_sw 
-  src/cable_landing_controller_sw.cpp
+add_executable(trajectory_controller 
+  src/trajectory_controller.cpp
   src/matlab_MPC/minOrMax.cpp
   src/matlab_MPC/mpcmoveCodeGeneration.cpp
   src/matlab_MPC/mpcmoveCodeGeneration_data.cpp
@@ -54,7 +54,7 @@ add_executable(cable_landing_controller_sw
   src/matlab_MPC/xnrm2.cpp
   src/matlab_MPC/xpotrf.cpp
 )
-ament_target_dependencies(cable_landing_controller_sw
+ament_target_dependencies(trajectory_controller
   rclcpp
   Eigen3
   iii_interfaces
@@ -66,7 +66,7 @@ ament_target_dependencies(cable_landing_controller_sw
   tf2_ros
   tf2_geometry_msgs
 )
-install(TARGETS cable_landing_controller_sw DESTINATION lib/${PROJECT_NAME})
+install(TARGETS trajectory_controller DESTINATION lib/${PROJECT_NAME})
 
 # Install launch files
 install(DIRECTORY

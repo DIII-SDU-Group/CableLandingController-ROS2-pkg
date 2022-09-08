@@ -2,13 +2,13 @@
 // Includes
 /*****************************************************************************/
 
-#include "cable_landing_controller_sw.h"
+#include "trajectory_controller.h"
 
 /*****************************************************************************/
 // Implementation
 /*****************************************************************************/
 
-CableLandingController::CableLandingController(const std::string & node_name, 
+TrajectoryController::TrajectoryController(const std::string & node_name, 
 						const std::string & node_namespace, const rclcpp::NodeOptions & options) : 
 	Node(node_name, node_namespace, options),
 	request_queue_(1), 
@@ -111,36 +111,36 @@ CableLandingController::CableLandingController(const std::string & node_name,
 	this->takeoff_server_ = rclcpp_action::create_server<Takeoff>(
 		this,
 		"takeoff",
-		std::bind(&CableLandingController::handleGoalTakeoff, this, std::placeholders::_1, std::placeholders::_2),
-		std::bind(&CableLandingController::handleCancelTakeoff, this, std::placeholders::_1),
-		std::bind(&CableLandingController::handleAcceptedTakeoff, this, std::placeholders::_1)
+		std::bind(&TrajectoryController::handleGoalTakeoff, this, std::placeholders::_1, std::placeholders::_2),
+		std::bind(&TrajectoryController::handleCancelTakeoff, this, std::placeholders::_1),
+		std::bind(&TrajectoryController::handleAcceptedTakeoff, this, std::placeholders::_1)
 	);
 
 	// Landing action:
 	this->landing_server_ = rclcpp_action::create_server<Landing>(
 		this,
 		"landing",
-		std::bind(&CableLandingController::handleGoalLanding, this, std::placeholders::_1, std::placeholders::_2),
-		std::bind(&CableLandingController::handleCancelLanding, this, std::placeholders::_1),
-		std::bind(&CableLandingController::handleAcceptedLanding, this, std::placeholders::_1)
+		std::bind(&TrajectoryController::handleGoalLanding, this, std::placeholders::_1, std::placeholders::_2),
+		std::bind(&TrajectoryController::handleCancelLanding, this, std::placeholders::_1),
+		std::bind(&TrajectoryController::handleAcceptedLanding, this, std::placeholders::_1)
 	);
 
 	// Fly to position action:
 	this->fly_to_position_server_ = rclcpp_action::create_server<FlyToPosition>(
 		this,
 		"fly_to_position",
-		std::bind(&CableLandingController::handleGoalFlyToPosition, this, std::placeholders::_1, std::placeholders::_2),
-		std::bind(&CableLandingController::handleCancelFlyToPosition, this, std::placeholders::_1),
-		std::bind(&CableLandingController::handleAcceptedFlyToPosition, this, std::placeholders::_1)
+		std::bind(&TrajectoryController::handleGoalFlyToPosition, this, std::placeholders::_1, std::placeholders::_2),
+		std::bind(&TrajectoryController::handleCancelFlyToPosition, this, std::placeholders::_1),
+		std::bind(&TrajectoryController::handleAcceptedFlyToPosition, this, std::placeholders::_1)
 	);
 
 	// Cable landing action:
 	this->cable_landing_server_ = rclcpp_action::create_server<CableLanding>(
 		this,
 		"cable_landing",
-		std::bind(&CableLandingController::handleGoalCableLanding, this, std::placeholders::_1, std::placeholders::_2),
-		std::bind(&CableLandingController::handleCancelCableLanding, this, std::placeholders::_1),
-		std::bind(&CableLandingController::handleAcceptedCableLanding, this, std::placeholders::_1)
+		std::bind(&TrajectoryController::handleGoalCableLanding, this, std::placeholders::_1, std::placeholders::_2),
+		std::bind(&TrajectoryController::handleCancelCableLanding, this, std::placeholders::_1),
+		std::bind(&TrajectoryController::handleAcceptedCableLanding, this, std::placeholders::_1)
 	);
 
 	// Publishers and subscriptions:
@@ -180,18 +180,18 @@ CableLandingController::CableLandingController(const std::string & node_name,
 
 	odometry_sub_ = this->create_subscription<px4_msgs::msg::VehicleOdometry>(  ////
 		"/fmu/vehicle_odometry/out", 10,
-		std::bind(&CableLandingController::odometryCallback, this, std::placeholders::_1));
+		std::bind(&TrajectoryController::odometryCallback, this, std::placeholders::_1));
 
 	powerline_sub_ = this->create_subscription<iii_interfaces::msg::Powerline>(
 		"/pl_mapper/powerline", 10,
-		std::bind(&CableLandingController::powerlineCallback, this, std::placeholders::_1));
+		std::bind(&TrajectoryController::powerlineCallback, this, std::placeholders::_1));
 
 	main_state_machine_timer_ = this->create_wall_timer(
-		100ms, std::bind(&CableLandingController::stateMachineCallback, this));
+		100ms, std::bind(&TrajectoryController::stateMachineCallback, this));
 
 }
 
-CableLandingController::~CableLandingController() {
+TrajectoryController::~TrajectoryController() {
 
 	RCLCPP_INFO(this->get_logger(),  "Shutting down offboard control..");
 	land();
@@ -199,7 +199,7 @@ CableLandingController::~CableLandingController() {
 	
 }
 
-rclcpp_action::GoalResponse CableLandingController::handleGoalTakeoff(
+rclcpp_action::GoalResponse TrajectoryController::handleGoalTakeoff(
 	const rclcpp_action::GoalUUID & uuid, 
 	std::shared_ptr<const Takeoff::Goal> goal
 ) {
@@ -240,21 +240,21 @@ rclcpp_action::GoalResponse CableLandingController::handleGoalTakeoff(
 
 }
 
-rclcpp_action::CancelResponse CableLandingController::handleCancelTakeoff(const std::shared_ptr<GoalHandleTakeoff> goal_handle) {
+rclcpp_action::CancelResponse TrajectoryController::handleCancelTakeoff(const std::shared_ptr<GoalHandleTakeoff> goal_handle) {
 
 	return rclcpp_action::CancelResponse::REJECT;
 
 }
 
-void CableLandingController::handleAcceptedTakeoff(const std::shared_ptr<GoalHandleTakeoff> goal_handle) {
+void TrajectoryController::handleAcceptedTakeoff(const std::shared_ptr<GoalHandleTakeoff> goal_handle) {
 
 	using namespace std::placeholders;
 
-	std::thread{ std::bind(&CableLandingController::followTakeoffCompletion, this, _1), goal_handle}.detach();
+	std::thread{ std::bind(&TrajectoryController::followTakeoffCompletion, this, _1), goal_handle}.detach();
 
 }
 
-void CableLandingController::followTakeoffCompletion(const std::shared_ptr<GoalHandleTakeoff> goal_handle) {
+void TrajectoryController::followTakeoffCompletion(const std::shared_ptr<GoalHandleTakeoff> goal_handle) {
 
 	rclcpp_action::GoalUUID action_id = (rclcpp_action::GoalUUID)goal_handle->get_goal_id();
 
@@ -311,7 +311,7 @@ void CableLandingController::followTakeoffCompletion(const std::shared_ptr<GoalH
 	}
 }
 
-rclcpp_action::GoalResponse CableLandingController::handleGoalLanding(
+rclcpp_action::GoalResponse TrajectoryController::handleGoalLanding(
 	const rclcpp_action::GoalUUID & uuid, 
 	std::shared_ptr<const Landing::Goal> goal
 ) {
@@ -342,21 +342,21 @@ rclcpp_action::GoalResponse CableLandingController::handleGoalLanding(
 
 }
 
-rclcpp_action::CancelResponse CableLandingController::handleCancelLanding(const std::shared_ptr<GoalHandleLanding> goal_handle) {
+rclcpp_action::CancelResponse TrajectoryController::handleCancelLanding(const std::shared_ptr<GoalHandleLanding> goal_handle) {
 
 	return rclcpp_action::CancelResponse::REJECT;
 
 }
 
-void CableLandingController::handleAcceptedLanding(const std::shared_ptr<GoalHandleLanding> goal_handle) {
+void TrajectoryController::handleAcceptedLanding(const std::shared_ptr<GoalHandleLanding> goal_handle) {
 
 	using namespace std::placeholders;
 
-	std::thread{ std::bind(&CableLandingController::followLandingCompletion, this, _1), goal_handle}.detach();
+	std::thread{ std::bind(&TrajectoryController::followLandingCompletion, this, _1), goal_handle}.detach();
 
 }
 
-void CableLandingController::followLandingCompletion(const std::shared_ptr<GoalHandleLanding> goal_handle) {
+void TrajectoryController::followLandingCompletion(const std::shared_ptr<GoalHandleLanding> goal_handle) {
 
 	rclcpp_action::GoalUUID action_id = (rclcpp_action::GoalUUID)goal_handle->get_goal_id();
 
@@ -413,7 +413,7 @@ void CableLandingController::followLandingCompletion(const std::shared_ptr<GoalH
 	}
 }
 
-rclcpp_action::GoalResponse CableLandingController::handleGoalFlyToPosition(
+rclcpp_action::GoalResponse TrajectoryController::handleGoalFlyToPosition(
 	const rclcpp_action::GoalUUID & uuid, 
 	std::shared_ptr<const FlyToPosition::Goal> goal
 ) {
@@ -471,7 +471,7 @@ rclcpp_action::GoalResponse CableLandingController::handleGoalFlyToPosition(
 
 }
 
-rclcpp_action::CancelResponse CableLandingController::handleCancelFlyToPosition(const std::shared_ptr<GoalHandleFlyToPosition> goal_handle) {
+rclcpp_action::CancelResponse TrajectoryController::handleCancelFlyToPosition(const std::shared_ptr<GoalHandleFlyToPosition> goal_handle) {
 
 	RCLCPP_DEBUG(this->get_logger(), "Received fly to position cancel request");
 
@@ -496,17 +496,17 @@ rclcpp_action::CancelResponse CableLandingController::handleCancelFlyToPosition(
 
 }
 
-void CableLandingController::handleAcceptedFlyToPosition(const std::shared_ptr<GoalHandleFlyToPosition> goal_handle) {
+void TrajectoryController::handleAcceptedFlyToPosition(const std::shared_ptr<GoalHandleFlyToPosition> goal_handle) {
 
 	// //LOG_INFO("i");
 
 	using namespace std::placeholders;
 
-	std::thread{ std::bind(&CableLandingController::followFlyToPositionCompletion, this, _1), goal_handle}.detach();
+	std::thread{ std::bind(&TrajectoryController::followFlyToPositionCompletion, this, _1), goal_handle}.detach();
 
 }
 
-void CableLandingController::followFlyToPositionCompletion(const std::shared_ptr<GoalHandleFlyToPosition> goal_handle) {
+void TrajectoryController::followFlyToPositionCompletion(const std::shared_ptr<GoalHandleFlyToPosition> goal_handle) {
 
 	// //LOG_INFO("j");
 
@@ -597,7 +597,7 @@ void CableLandingController::followFlyToPositionCompletion(const std::shared_ptr
 	}
 }
 
-rclcpp_action::GoalResponse CableLandingController::handleGoalCableLanding(
+rclcpp_action::GoalResponse TrajectoryController::handleGoalCableLanding(
 	const rclcpp_action::GoalUUID & uuid, 
 	std::shared_ptr<const CableLanding::Goal> goal
 ) {
@@ -643,7 +643,7 @@ rclcpp_action::GoalResponse CableLandingController::handleGoalCableLanding(
 
 }
 
-rclcpp_action::CancelResponse CableLandingController::handleCancelCableLanding(const std::shared_ptr<GoalHandleCableLanding> goal_handle) {
+rclcpp_action::CancelResponse TrajectoryController::handleCancelCableLanding(const std::shared_ptr<GoalHandleCableLanding> goal_handle) {
 
 	RCLCPP_DEBUG(this->get_logger(), "Received cable landing cancel request");
 	
@@ -662,15 +662,15 @@ rclcpp_action::CancelResponse CableLandingController::handleCancelCableLanding(c
 
 }
 
-void CableLandingController::handleAcceptedCableLanding(const std::shared_ptr<GoalHandleCableLanding> goal_handle) {
+void TrajectoryController::handleAcceptedCableLanding(const std::shared_ptr<GoalHandleCableLanding> goal_handle) {
 
 	using namespace std::placeholders;
 
-	std::thread{ std::bind(&CableLandingController::followCableLandingCompletion, this, _1), goal_handle}.detach();
+	std::thread{ std::bind(&TrajectoryController::followCableLandingCompletion, this, _1), goal_handle}.detach();
 
 }
 
-void CableLandingController::followCableLandingCompletion(const std::shared_ptr<GoalHandleCableLanding> goal_handle) {
+void TrajectoryController::followCableLandingCompletion(const std::shared_ptr<GoalHandleCableLanding> goal_handle) {
 
 	rclcpp_action::GoalUUID action_id = (rclcpp_action::GoalUUID)goal_handle->get_goal_id();
 
@@ -751,7 +751,7 @@ void CableLandingController::followCableLandingCompletion(const std::shared_ptr<
 	}
 }
 
-void CableLandingController::stateMachineCallback() {
+void TrajectoryController::stateMachineCallback() {
 
 	float landed_altitude_threshold;
 	this->get_parameter("landed_altitude_threshold", landed_altitude_threshold);
@@ -1404,7 +1404,7 @@ void CableLandingController::stateMachineCallback() {
 
 }
 
-void CableLandingController::odometryCallback(px4_msgs::msg::VehicleOdometry::SharedPtr msg) {
+void TrajectoryController::odometryCallback(px4_msgs::msg::VehicleOdometry::SharedPtr msg) {
 
 	quat_t q(
 		msg->q[0],
@@ -1442,7 +1442,7 @@ void CableLandingController::odometryCallback(px4_msgs::msg::VehicleOdometry::Sh
 
 }
 
-void CableLandingController::powerlineCallback(iii_interfaces::msg::Powerline::SharedPtr msg) {
+void TrajectoryController::powerlineCallback(iii_interfaces::msg::Powerline::SharedPtr msg) {
 
 	powerline_mutex_.lock(); {
 
@@ -1452,25 +1452,25 @@ void CableLandingController::powerlineCallback(iii_interfaces::msg::Powerline::S
 
 }
 
-bool CableLandingController::isOffboard() {
+bool TrajectoryController::isOffboard() {
 
 	return nav_state_ == px4_msgs::msg::VehicleStatus::NAVIGATION_STATE_OFFBOARD;
 
 }
 
-bool CableLandingController::isArmed() {
+bool TrajectoryController::isArmed() {
 
 	return arming_state_ == px4_msgs::msg::VehicleStatus::ARMING_STATE_ARMED;
 
 }
 
-void CableLandingController::setModeOffboard() {
+void TrajectoryController::setModeOffboard() {
 
 	publishVehicleCommand(px4_msgs::msg::VehicleCommand::VEHICLE_CMD_DO_SET_MODE, 1, 6);
 
 }
 
-void CableLandingController::land() {
+void TrajectoryController::land() {
 
 	publishVehicleCommand(px4_msgs::msg::VehicleCommand::VEHICLE_CMD_NAV_LAND);
 
@@ -1479,7 +1479,7 @@ void CableLandingController::land() {
 /**
  * @brief Send a command to Arm the vehicle
  */
-void CableLandingController::arm() {
+void TrajectoryController::arm() {
 
 	//armed = true;
 	publishVehicleCommand(px4_msgs::msg::VehicleCommand::VEHICLE_CMD_COMPONENT_ARM_DISARM, 1.0);
@@ -1491,7 +1491,7 @@ void CableLandingController::arm() {
 /**
  * @brief Send a command to Disarm the vehicle
  */
-void CableLandingController::disarm() {
+void TrajectoryController::disarm() {
 
 	//armed = false;
 	publishVehicleCommand(px4_msgs::msg::VehicleCommand::VEHICLE_CMD_COMPONENT_ARM_DISARM, 0.0);
@@ -1505,7 +1505,7 @@ void CableLandingController::disarm() {
  * @param param1    Command parameter 1
  * @param param2    Command parameter 2
  */
-void CableLandingController::publishVehicleCommand(uint16_t command, float param1,
+void TrajectoryController::publishVehicleCommand(uint16_t command, float param1,
 					      float param2, float param3, float param4,
 					      float param5, float param6,
 					      float param7) const {
@@ -1534,7 +1534,7 @@ void CableLandingController::publishVehicleCommand(uint16_t command, float param
  * @brief Publish the offboard control mode.
  *        For this example, only position and altitude controls are active.
  */
-void CableLandingController::publishOffboardControlMode() const {
+void TrajectoryController::publishOffboardControlMode() const {
 	px4_msgs::msg::OffboardControlMode msg{};
 	msg.timestamp = timestamp_.load();
 	msg.position = true;
@@ -1545,7 +1545,7 @@ void CableLandingController::publishOffboardControlMode() const {
 	offboard_control_mode_pub_->publish(msg);
 }
 
-void CableLandingController::publishControlState() {
+void TrajectoryController::publishControlState() {
 
 	iii_interfaces::msg::ControlState msg;
 
@@ -1601,7 +1601,7 @@ void CableLandingController::publishControlState() {
 /**
  * @brief Publish a trajectory setpoint
  */
-void CableLandingController::publishTrajectorySetpoint(state4_t set_point) const {
+void TrajectoryController::publishTrajectorySetpoint(state4_t set_point) const {
 
 	static rotation_matrix_t R_NED_to_body_frame = eulToR(orientation_t(M_PI, 0, 0));
 
@@ -1660,7 +1660,7 @@ void CableLandingController::publishTrajectorySetpoint(state4_t set_point) const
 
 }
 
-void CableLandingController::publishPlannedTrajectory() {
+void TrajectoryController::publishPlannedTrajectory() {
 
 	nav_msgs::msg::Path path = loadPlannedPath();
 	nav_msgs::msg::Path macro_path = loadPlannedMacroPath();
@@ -1687,7 +1687,7 @@ void CableLandingController::publishPlannedTrajectory() {
 }
 
 
-state4_t CableLandingController::loadVehicleState() {
+state4_t TrajectoryController::loadVehicleState() {
 
 	static rotation_matrix_t R_NED_to_body_frame = eulToR(orientation_t(M_PI, 0, 0));
 
@@ -1724,7 +1724,7 @@ state4_t CableLandingController::loadVehicleState() {
 
 }
 
-geometry_msgs::msg::PoseStamped CableLandingController::loadVehiclePose() {
+geometry_msgs::msg::PoseStamped TrajectoryController::loadVehiclePose() {
 
 	state4_t veh_state = loadVehicleState();
 
@@ -1749,7 +1749,7 @@ geometry_msgs::msg::PoseStamped CableLandingController::loadVehiclePose() {
 
 }
 
-nav_msgs::msg::Path CableLandingController::loadPlannedPath() {
+nav_msgs::msg::Path TrajectoryController::loadPlannedPath() {
 
 	std::vector<state4_t> trajectory_vec;
 
@@ -1798,7 +1798,7 @@ nav_msgs::msg::Path CableLandingController::loadPlannedPath() {
 
 }
 
-nav_msgs::msg::Path CableLandingController::loadPlannedMacroPath() {
+nav_msgs::msg::Path TrajectoryController::loadPlannedMacroPath() {
 
 	std::vector<state4_t> trajectory_vec;
 
@@ -1847,7 +1847,7 @@ nav_msgs::msg::Path CableLandingController::loadPlannedMacroPath() {
 
 }
 
-geometry_msgs::msg::PoseStamped CableLandingController::loadPlannedTarget() {
+geometry_msgs::msg::PoseStamped TrajectoryController::loadPlannedTarget() {
 
 	state4_t target_cp;
 
@@ -1878,7 +1878,7 @@ geometry_msgs::msg::PoseStamped CableLandingController::loadPlannedTarget() {
 
 }
 
-state4_t CableLandingController::loadTargetCableState() {
+state4_t TrajectoryController::loadTargetCableState() {
 
 	state4_t cable_state;
 
@@ -1912,7 +1912,7 @@ state4_t CableLandingController::loadTargetCableState() {
 
 }
 
-state4_t CableLandingController::stepPositionMPC(state4_t vehicle_state, state4_t target_state, bool reset) {
+state4_t TrajectoryController::stepPositionMPC(state4_t vehicle_state, state4_t target_state, bool reset) {
 
 		//LOG_INFO("3");
 
@@ -2015,7 +2015,7 @@ state4_t CableLandingController::stepPositionMPC(state4_t vehicle_state, state4_
 
 	prev_vehicle_state = vehicle_state;
 
-	MPC_thread_ = std::thread( &CableLandingController::threadFunctionPositionMPC, this,
+	MPC_thread_ = std::thread( &TrajectoryController::threadFunctionPositionMPC, this,
 					MPC_x_, MPC_u_, MPC_planned_traj_, target, reset_target, reset_trajectory, reset_bounds, reset_weights);
 
 
@@ -2098,7 +2098,7 @@ state4_t CableLandingController::stepPositionMPC(state4_t vehicle_state, state4_
 
 }
 
-void CableLandingController::threadFunctionPositionMPC(double *x, double *u, double *planned_traj, double *target, 
+void TrajectoryController::threadFunctionPositionMPC(double *x, double *u, double *planned_traj, double *target, 
 		int reset_target, int reset_trajectory, int reset_bounds, int reset_weights) {
 
 	static double dt;
@@ -2307,7 +2307,7 @@ void CableLandingController::threadFunctionPositionMPC(double *x, double *u, dou
 
 }
 
-// void CableLandingController::threadFunctionPositionMPC(double *x, double *planned_traj, double *target, 
+// void TrajectoryController::threadFunctionPositionMPC(double *x, double *planned_traj, double *target, 
 // 		int reset_target, int reset_trajectory, int reset_bounds, int reset_weights) {
 
 // 	static double dt;
@@ -2400,7 +2400,7 @@ void CableLandingController::threadFunctionPositionMPC(double *x, double *u, dou
 
 // }
 
-state4_t CableLandingController::stepCableLandingMPC(state4_t vehicle_state, state4_t target_state, bool reset) {
+state4_t TrajectoryController::stepCableLandingMPC(state4_t vehicle_state, state4_t target_state, bool reset) {
 
 	// Static variables:
 
@@ -2554,7 +2554,7 @@ state4_t CableLandingController::stepCableLandingMPC(state4_t vehicle_state, sta
 
 }
 
-void CableLandingController::clearPlannedTrajectory() {
+void TrajectoryController::clearPlannedTrajectory() {
 
 	planned_trajectory_mutex_.lock(); {
 
@@ -2570,7 +2570,7 @@ void CableLandingController::clearPlannedTrajectory() {
 
 }
 
-void CableLandingController::setTrajectoryTarget(state4_t target) {
+void TrajectoryController::setTrajectoryTarget(state4_t target) {
 
 	planned_trajectory_mutex_.lock(); {
 
@@ -2580,7 +2580,7 @@ void CableLandingController::setTrajectoryTarget(state4_t target) {
 
 }
 
-bool CableLandingController::updateTargetCablePose(int new_id) {
+bool TrajectoryController::updateTargetCablePose(int new_id) {
 
 	bool success = false;
 
@@ -2611,7 +2611,7 @@ bool CableLandingController::updateTargetCablePose(int new_id) {
 
 }
 
-void CableLandingController::clearTargetCable() {
+void TrajectoryController::clearTargetCable() {
 
 	powerline_mutex_.lock(); {
 
@@ -2626,7 +2626,7 @@ int main(int argc, char* argv[]) {
 
 	setvbuf(stdout, NULL, _IONBF, BUFSIZ);
 	rclcpp::init(argc, argv);
-	rclcpp::spin(std::make_shared<CableLandingController>());
+	rclcpp::spin(std::make_shared<TrajectoryController>());
 
 	rclcpp::shutdown();
 	return 0;

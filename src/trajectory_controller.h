@@ -164,7 +164,7 @@ enum request_queue_action_t {
 // Class
 /*****************************************************************************/
 
-class CableLandingController : public rclcpp::Node {
+class TrajectoryController : public rclcpp::Node {
 public:
 	using Takeoff = iii_interfaces::action::Takeoff;
 	using GoalHandleTakeoff = rclcpp_action::ServerGoalHandle<Takeoff>;
@@ -178,10 +178,10 @@ public:
 	using CableLanding = iii_interfaces::action::CableLanding;
 	using GoalHandleCableLanding = rclcpp_action::ServerGoalHandle<CableLanding>;
 
-	CableLandingController(const std::string & node_name="cable_landing_controller", 
+	TrajectoryController(const std::string & node_name="cable_landing_controller", 
 			const std::string & node_namespace="/cable_landing_controller", 
 			const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
-	~CableLandingController();
+	~TrajectoryController();
 
 private:
 	// Takeoff action:
