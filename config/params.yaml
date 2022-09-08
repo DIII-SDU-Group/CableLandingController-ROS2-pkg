@@ -69,5 +69,6 @@ trajectory_controller:
 
 cable_drum_controller:
   cable_drum_controller:
-    cable_drum_initial_gain: 15
-    cable_drum_initial_reference: 8
+    ros__parameters:
+      cable_drum_initial_gain: 15
+      cable_drum_initial_reference: 8
