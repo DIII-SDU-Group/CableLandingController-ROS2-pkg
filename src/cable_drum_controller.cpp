@@ -131,18 +131,18 @@ void CableDrumController::followDrumManualRollCompletion(const std::shared_ptr<G
 
         rclcpp::Rate rate(100ms);
 
-        fpga_mutex_.lock(); {
-
-            XCabledrumbridge_Set_man_dir_CPU(&cdb_, direction_);
-            XCabledrumbridge_Set_duty_cycle_CPU(&cdb_, duty_cycle_);
-
-
-        } fpga_mutex_.unlock();
-
         cable_drum_info_mutex_.lock(); {
 
             direction_ = target_direction_;
             duty_cycle_ = target_duty_cycle_;
+
+            fpga_mutex_.lock(); {
+
+                XCabledrumbridge_Set_man_dir_CPU(&cdb_, direction_);
+                XCabledrumbridge_Set_duty_cycle_CPU(&cdb_, duty_cycle_);
+
+
+            } fpga_mutex_.unlock();
 
         } cable_drum_info_mutex_.unlock();
 
@@ -342,7 +342,18 @@ void CableDrumController::infoPublishTimerCallback() {
     msg.direction = direction;
     msg.duty_cycle = duty_cycle;
     msg.gain = gain;
-    msg.mode = mode;
+    switch(mode) {
+    default:
+    case PARAM_MODE_OFF:
+        msg.mode = msg.MODE_OFF;
+        break;
+    case PARAM_MODE_MAN:
+        msg.mode = msg.MODE_MANUAL;
+        break;
+    case PARAM_MODE_REF_TRACK:
+        msg.mode = msg.MODE_REF_TRACK;
+        break;
+    }
     msg.reference = reference;
     msg.sensor_flex = sensor_flex;
 
