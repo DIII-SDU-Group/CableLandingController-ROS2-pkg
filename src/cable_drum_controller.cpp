@@ -133,17 +133,18 @@ void CableDrumController::followDrumManualRollCompletion(const std::shared_ptr<G
 
         fpga_mutex_.lock(); {
 
-            cable_drum_info_mutex_.lock(); {
+            XCabledrumbridge_Set_man_dir_CPU(&cdb_, direction_);
+            XCabledrumbridge_Set_duty_cycle_CPU(&cdb_, duty_cycle_);
 
-                direction_ = target_direction_;
-                duty_cycle_ = target_duty_cycle_;
-
-                XCabledrumbridge_Set_man_dir_CPU(&cdb_, direction_);
-                XCabledrumbridge_Set_duty_cycle_CPU(&cdb_, duty_cycle_);
-
-            }
 
         } fpga_mutex_.unlock();
+
+        cable_drum_info_mutex_.lock(); {
+
+            direction_ = target_direction_;
+            duty_cycle_ = target_duty_cycle_;
+
+        } cable_drum_info_mutex_.unlock();
 
         for (float t = 0.; t < target_seconds_; t+=0.1) {
 
@@ -259,15 +260,29 @@ void CableDrumController::drumSetGainServiceCallback(const std::shared_ptr<iii_i
 void CableDrumController::drumSetModeServiceCallback(const std::shared_ptr<iii_interfaces::srv::DrumSetMode::Request> request,
                                 std::shared_ptr<iii_interfaces::srv::DrumSetMode::Response> response) {
 
+    uint8_t fpga_mode;
+    switch(request->mode) {
+    default:
+    case iii_interfaces::srv::DrumSetMode::Request::MODE_OFF:
+        fpga_mode = PARAM_MODE_OFF;
+        break;
+    case iii_interfaces::srv::DrumSetMode::Request::MODE_REF_TRACK:
+        fpga_mode = PARAM_MODE_REF_TRACK;
+        break;
+    case iii_interfaces::srv::DrumSetMode::Request::MODE_MANUAL:
+        fpga_mode = PARAM_MODE_MAN;
+        break;
+    }
+
     fpga_mutex_.lock(); {
 
-        XCabledrumbridge_Set_mode_CPU(&cdb_, request->mode);
+        XCabledrumbridge_Set_mode_CPU(&cdb_, fpga_mode);
 
     } fpga_mutex_.unlock();
 
     cable_drum_info_mutex_.lock(); {
 
-        mode_ = request->mode;
+        mode_ = fpga_mode;
 
     } cable_drum_info_mutex_.unlock();
 
