@@ -1458,6 +1458,8 @@ void TrajectoryController::stateMachineCallback() {
 			set_point = stepMPC(prev_veh_state, fixed_reference, true, positional);
 			//set_point = setZeroVelocity(fixed_reference);
 
+			offboard_cnt = 10;
+
 			state_ = in_positional_flight;
 
 		} else if (tryPendingRequest(cable_landing_request, if_match, if_match)) {
@@ -1525,7 +1527,7 @@ void TrajectoryController::stateMachineCallback() {
 
 		//LOG_INFO("1");
 
-		if (!offboard || !armed) {
+		if ((!offboard || !armed) && --offboard_cnt == 0) {
 
 			//LOG_INFO("a1");
 
