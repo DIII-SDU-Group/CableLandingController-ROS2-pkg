@@ -2463,12 +2463,12 @@ state4_t TrajectoryController::stepMPC(state4_t vehicle_state, state4_t target_s
 	}
 
 	// No state progression:
-	//for (int i = 0; i < 3; i++) MPC_x_[i] = vehicle_state(i);
-	//for (int i = 3; i < 6; i++) MPC_x_[i] = vehicle_state(i+1);
+	for (int i = 0; i < 3; i++) MPC_x_[i] = vehicle_state(i);
+	for (int i = 3; i < 6; i++) MPC_x_[i] = vehicle_state(i+1);
 
 	// With state progression:
-	for (int i = 0; i < 3; i++) MPC_x_[i] = vehicle_state(i) + vehicle_state(i+4)*dt + 0.5*u[i]*dt*dt;
-	for (int i = 0; i < 3; i++) MPC_x_[i+3] = vehicle_state(i+4) + u[i]*dt;
+	//for (int i = 0; i < 3; i++) MPC_x_[i] = vehicle_state(i) + vehicle_state(i+4)*dt + 0.5*u[i]*dt*dt;
+	//for (int i = 0; i < 3; i++) MPC_x_[i+3] = vehicle_state(i+4) + u[i]*dt;
 
 	prev_vehicle_state = vehicle_state;
 
