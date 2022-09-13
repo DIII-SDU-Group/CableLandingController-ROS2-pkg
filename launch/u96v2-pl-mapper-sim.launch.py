@@ -7,25 +7,15 @@ from launch_ros.substitutions import FindPackageShare
 from launch.substitutions import PathJoinSubstitution
 
 def generate_launch_description():
-    tf_launch = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource([
-            PathJoinSubstitution([
-                FindPackageShare("cable_landing_control"),
-                "launch/tf.launch.py"
-            ])
-        ])
-    )
-
     pl_tracker = IncludeLaunchDescription(
         PythonLaunchDescriptionSource([
             PathJoinSubstitution([
                 FindPackageShare("iii_drone"),
-                "launch/pl_tracker_SIM.launch.py"
+                "launch/pl_mapper_HW.launch.py"
             ])
         ])
     )
 
     return LaunchDescription([
-        tf_launch,
         pl_tracker
     ])
