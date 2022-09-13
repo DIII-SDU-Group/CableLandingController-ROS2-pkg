@@ -18,7 +18,6 @@ DoubleCableLander::DoubleCableLander(const std::string & node_name,
     this->declare_parameter<uint8_t>("cable_drum_manual_duty_cycle", 50);
     this->declare_parameter<uint8_t>("cable_drum_manual_seconds", 5);
     this->declare_parameter<uint8_t>("cable_drum_tracking_gain", 15);
-    this->declare_parameter<uint8_t>("cable_drum_tracking_gain", 15);
     this->declare_parameter<uint8_t>("cable_drum_tracking_reference", 7);
 
 	// tf
