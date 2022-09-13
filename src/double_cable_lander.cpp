@@ -197,10 +197,12 @@ void DoubleCableLander::followDoubleCableLandingCompletion(const std::shared_ptr
         float under_cable_altitude_subtract;
         this->get_parameter("under_cable_altitude_subtract", under_cable_altitude_subtract);
 
-        pose.header.frame_id = cable_pose.header.frame_id;
-        pose.pose = cable_pose.pose;
-        pose.pose.position.z -= under_cable_altitude_subtract;
-        pose = tf_buffer_->transform(pose, "world");
+        geometry_msgs::msg::PoseStamped tmp_pose;
+
+        tmp_pose.header.frame_id = cable_pose.header.frame_id;
+        tmp_pose.pose = cable_pose.pose;
+        tmp_pose.pose.position.z -= under_cable_altitude_subtract;
+        pose = tf_buffer_->transform(tmp_pose, "world");
 
         pose.pose.orientation.w = target_quat_(0);
         pose.pose.orientation.x = target_quat_(1);
@@ -403,7 +405,11 @@ void DoubleCableLander::followDoubleCableLandingCompletion(const std::shared_ptr
 
         auto gain_result = this->drum_set_gain_client_->async_send_request(gain_request);
 
-        bool success = rclcpp::spin_until_future_complete(this->get_node_base_interface(), gain_result) == rclcpp::executor::FutureReturnCode::SUCCESS;
+        gain_result.wait();
+
+        bool success = gain_result.get().get()->success;
+
+        //bool success = rclcpp::spin_until_future_complete(this->get_node_base_interface(), gain_result) == rclcpp::executor::FutureReturnCode::SUCCESS;
 
         if (!success)
             return false;
@@ -428,7 +434,11 @@ void DoubleCableLander::followDoubleCableLandingCompletion(const std::shared_ptr
 
         auto reference_result = this->drum_set_reference_client_->async_send_request(reference_request);
 
-        success = rclcpp::spin_until_future_complete(this->get_node_base_interface(), reference_result) == rclcpp::executor::FutureReturnCode::SUCCESS;
+        reference_result.wait();
+
+        success = reference_result.get().get()->success;
+
+        //success = rclcpp::spin_until_future_complete(this->get_node_base_interface(), reference_result) == rclcpp::executor::FutureReturnCode::SUCCESS;
 
         if (!success)
             return false;
@@ -450,7 +460,11 @@ void DoubleCableLander::followDoubleCableLandingCompletion(const std::shared_ptr
 
         auto mode_result = this->drum_set_mode_client_->async_send_request(mode_request);
 
-        success = rclcpp::spin_until_future_complete(this->get_node_base_interface(), mode_result) == rclcpp::executor::FutureReturnCode::SUCCESS;
+        mode_result.wait();
+
+        success = mode_result.get().get()->success;
+
+        //success = rclcpp::spin_until_future_complete(this->get_node_base_interface(), mode_result) == rclcpp::executor::FutureReturnCode::SUCCESS;
 
         return success;
 
@@ -472,7 +486,11 @@ void DoubleCableLander::followDoubleCableLandingCompletion(const std::shared_ptr
 
         auto mode_result = this->drum_set_mode_client_->async_send_request(mode_request);
 
-        bool success = rclcpp::spin_until_future_complete(this->get_node_base_interface(), mode_result) == rclcpp::executor::FutureReturnCode::SUCCESS;
+        mode_result.wait();
+
+        bool success = mode_result.get().get()->success;
+
+        //bool success = rclcpp::spin_until_future_complete(this->get_node_base_interface(), mode_result) == rclcpp::executor::FutureReturnCode::SUCCESS;
 
         return success;
 
@@ -494,7 +512,11 @@ void DoubleCableLander::followDoubleCableLandingCompletion(const std::shared_ptr
 
         auto mode_result = this->drum_set_mode_client_->async_send_request(mode_request);
 
-        bool success = rclcpp::spin_until_future_complete(this->get_node_base_interface(), mode_result) == rclcpp::executor::FutureReturnCode::SUCCESS;
+        mode_result.wait();
+        
+        bool success = mode_result.get().get()->success;
+
+        //bool success = rclcpp::spin_until_future_complete(this->get_node_base_interface(), mode_result) == rclcpp::executor::FutureReturnCode::SUCCESS;
 
         return success;
 
@@ -733,15 +755,25 @@ void DoubleCableLander::followDoubleCableLandingCompletion(const std::shared_ptr
 
             if (leave_cable_blocking()) {
 
+                std::cout << "5.1\n";
+
                 set_cable_drum_tracking();
+
+                std::cout << "5.2\n";
 
                 powerline = getPowerline();
 
+                std::cout << "5.3\n";
+
                 if (compute_pose_under_cable(powerline, second_cable_id_, under_cable_pose)) {
+
+                std::cout << "5.4\n";
 
                     state_ = fly_under_second_cable;
 
                 } else {
+
+                std::cout << "5.5\n";
 
                     abort_goal();
 
@@ -749,6 +781,8 @@ void DoubleCableLander::followDoubleCableLandingCompletion(const std::shared_ptr
 
 
             } else {
+
+                std::cout << "5.6\n";
 
                 abort_goal();
 
@@ -929,9 +963,9 @@ void DoubleCableLander::drumManualRollGoalResponseCallback(std::shared_future<Go
     auto goal_handle = future.get();
 
     if (goal_handle)
-        trajectory_goal_response_ = 1;
+        cable_drum_goal_response_ = 1;
     else
-        trajectory_goal_response_ = -1;
+        cable_drum_goal_response_ = -1;
 
 }
 
@@ -945,9 +979,9 @@ void DoubleCableLander::drumManualRollFeedbackCallback(GoalHandleDrumManualRoll:
 void DoubleCableLander::drumManualRollResultCallback(const GoalHandleDrumManualRoll::WrappedResult &result) {
 
     if (result.code == rclcpp_action::ResultCode::SUCCEEDED)
-        trajectory_goal_result_ = 1;
+        cable_drum_goal_result_ = 1;
     else   
-        trajectory_goal_result_ = -1;
+        cable_drum_goal_result_ = -1;
 
 }
 
