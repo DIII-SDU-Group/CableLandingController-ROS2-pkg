@@ -15,8 +15,8 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
-include_directories(src/matlab_MPC)
-link_directories(src/matlab_MPC)
+include_directories(src/matlab_MPC_5Hz)
+link_directories(src/matlab_MPC_5Hz)
 
 include_directories(src/CableDrumBridge/src)
 link_directories(src/CableDrumBridge/src)
@@ -41,21 +41,21 @@ find_package(tf2_geometry_msgs REQUIRED)
 
 add_executable(trajectory_controller 
   src/trajectory_controller.cpp
-  src/matlab_MPC/minOrMax.cpp
-  src/matlab_MPC/mpcmoveCodeGeneration.cpp
-  src/matlab_MPC/mpcmoveCodeGeneration_data.cpp
-  src/matlab_MPC/mpcmoveCodeGeneration_initialize.cpp
-  src/matlab_MPC/mpcmoveCodeGeneration_rtwutil.cpp
-  src/matlab_MPC/mpcmoveCodeGeneration_terminate.cpp
-  src/matlab_MPC/norm.cpp
-  src/matlab_MPC/qpkwik.cpp
-  src/matlab_MPC/rtGetInf.cpp
-  src/matlab_MPC/rtGetNaN.cpp
-  src/matlab_MPC/rt_nonfinite.cpp
-  src/matlab_MPC/trisolve.cpp
-  src/matlab_MPC/xgerc.cpp
-  src/matlab_MPC/xnrm2.cpp
-  src/matlab_MPC/xpotrf.cpp
+  src/matlab_MPC_5Hz/minOrMax.cpp
+  src/matlab_MPC_5Hz/mpcmoveCodeGeneration.cpp
+  src/matlab_MPC_5Hz/mpcmoveCodeGeneration_data.cpp
+  src/matlab_MPC_5Hz/mpcmoveCodeGeneration_initialize.cpp
+  src/matlab_MPC_5Hz/mpcmoveCodeGeneration_rtwutil.cpp
+  src/matlab_MPC_5Hz/mpcmoveCodeGeneration_terminate.cpp
+  src/matlab_MPC_5Hz/norm.cpp
+  src/matlab_MPC_5Hz/qpkwik.cpp
+  src/matlab_MPC_5Hz/rtGetInf.cpp
+  src/matlab_MPC_5Hz/rtGetNaN.cpp
+  src/matlab_MPC_5Hz/rt_nonfinite.cpp
+  src/matlab_MPC_5Hz/trisolve.cpp
+  src/matlab_MPC_5Hz/xgerc.cpp
+  src/matlab_MPC_5Hz/xnrm2.cpp
+  src/matlab_MPC_5Hz/xpotrf.cpp
 )
 ament_target_dependencies(trajectory_controller
   rclcpp

@@ -1,7 +1,7 @@
 trajectory_controller:
   trajectory_controller:
     ros__parameters:
-      controller_period_ms: 100
+      controller_period_ms: 200
       landed_altitude_threshold: 0.5
       reached_position_euclidean_distance_threshold: 0.1
       min_target_altitude: 1.
@@ -13,7 +13,7 @@ trajectory_controller:
       target_cable_safety_margin_max_yaw_distance: 0.314159265
       target_cable_safety_margin_max_yaw_velocity: 1.570796327
       target_cable_set_point_truncate_distance_threshold: 0.25
-      MPC_dt: 0.1
+      MPC_dt: 0.2
       position_MPC_vx_max: 2.
       position_MPC_vy_max: 2.
       position_MPC_vz_max: 2.

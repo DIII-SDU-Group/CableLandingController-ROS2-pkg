@@ -193,8 +193,11 @@ TrajectoryController::TrajectoryController(const std::string & node_name,
 		"/pl_mapper/powerline", 10,
 		std::bind(&TrajectoryController::powerlineCallback, this, std::placeholders::_1));
 
+	int controller_period_ms;
+	this->get_parameter("controller_period_ms", controller_period_ms);
+
 	main_state_machine_timer_ = this->create_wall_timer(
-		100ms, std::bind(&TrajectoryController::stateMachineCallback, this));
+		std::chrono::milliseconds(controller_period_ms), std::bind(&TrajectoryController::stateMachineCallback, this));
 
 }
 
