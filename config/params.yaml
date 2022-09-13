@@ -14,15 +14,15 @@ trajectory_controller:
       target_cable_safety_margin_max_yaw_velocity: 1.570796327
       target_cable_set_point_truncate_distance_threshold: 0.25
       MPC_dt: 0.2
-      position_MPC_vx_max: 2.
-      position_MPC_vy_max: 2.
-      position_MPC_vz_max: 2.
+      position_MPC_vx_max: 1.
+      position_MPC_vy_max: 1.
+      position_MPC_vz_max: 1.
       position_MPC_ax_max: 1.0
       position_MPC_ay_max: 1.0
       position_MPC_az_max: 1.0
-      position_MPC_wx: 10.
-      position_MPC_wy: 10.
-      position_MPC_wz: 10.
+      position_MPC_wx: 5.
+      position_MPC_wy: 5.
+      position_MPC_wz: 5.
       position_MPC_wvx: 1.0
       position_MPC_wvy: 1.0
       position_MPC_wvz: 1.0
