@@ -5,70 +5,82 @@ trajectory_controller:
       landed_altitude_threshold: 0.5
       reached_position_euclidean_distance_threshold: 0.1
       min_target_altitude: 1.
-      position_MPC_dt: 0.1
+      target_cable_fixed_position_distance_threshold: 0.5
+      target_cable_safety_margin_distance_threshold: 0.25
+      target_cable_safety_margin_max_euc_distance: 0.1
+      target_cable_safety_margin_max_euc_velocity: 1.
+      target_cable_safety_margin_max_euc_acceleration: 1.
+      target_cable_safety_margin_max_yaw_distance: 0.314159265
+      target_cable_safety_margin_max_yaw_velocity: 1.570796327
+      target_cable_set_point_truncate_distance_threshold: 0.25
+      MPC_dt: 0.1
       position_MPC_vx_max: 2.
       position_MPC_vy_max: 2.
       position_MPC_vz_max: 2.
-      position_MPC_vpsi_max: 1.56
       position_MPC_ax_max: 1.0
       position_MPC_ay_max: 1.0
       position_MPC_az_max: 1.0
-      position_MPC_apsi_max: 1.56
-      position_MPC_wx: 1.
-      position_MPC_wy: 1.
-      position_MPC_wz: 1.
-      position_MPC_wpsi: 1.
+      position_MPC_wx: 10.
+      position_MPC_wy: 10.
+      position_MPC_wz: 10.
       position_MPC_wvx: 1.0
       position_MPC_wvy: 1.0
       position_MPC_wvz: 1.0
-      position_MPC_wvpsi: 1.
       position_MPC_wax: 0.01
       position_MPC_way: 0.01
       position_MPC_waz: 0.01
-      position_MPC_wapsi: 0.
       position_MPC_wjx: 0.1
       position_MPC_wjy: 0.1
       position_MPC_wjz: 0.1
-      position_MPC_wx_last: 10.
-      position_MPC_wy_last: 10.
-      position_MPC_wz_last: 10.
-      position_MPC_wpsi_last: 1.
-      position_MPC_wvx_last: 1.
-      position_MPC_wvy_last: 1.
-      position_MPC_wvz_last: 1.
-      position_MPC_wvpsi_last: 2.
-      position_MPC_wax_last: 0.1
-      position_MPC_way_last: 0.1
-      position_MPC_waz_last: 0.1
-      position_MPC_wapsi_last: 0.
-      cable_landing_MPC_dt: 0.1
-      cable_landing_MPC_vx_max: 10.
-      cable_landing_MPC_vy_max: 10.
-      cable_landing_MPC_vz_max: 5.
-      cable_landing_MPC_vpsi_max: 1.06
-      cable_landing_MPC_ax_max: 10.
-      cable_landing_MPC_ay_max: 10.
-      cable_landing_MPC_az_max: 10.
-      cable_landing_MPC_apsi_max: 1.06
-      cable_landing_MPC_wx: 0.
-      cable_landing_MPC_wy: 0.
-      cable_landing_MPC_wz: 0.
-      cable_landing_MPC_wpsi: 0.
-      cable_landing_MPC_wvx: 0.
-      cable_landing_MPC_wvy: 0.
-      cable_landing_MPC_wvz: 0.
-      cable_landing_MPC_wvpsi: 0.
-      cable_landing_MPC_wx_last: 10.
-      cable_landing_MPC_wy_last: 10.
-      cable_landing_MPC_wz_last: 1.
-      cable_landing_MPC_wpsi_last: 10.
-      cable_landing_MPC_wvx_last: 5.
-      cable_landing_MPC_wvy_last: 5.
-      cable_landing_MPC_wvz_last: 5.
-      cable_landing_MPC_wvpsi_last: 5.
+      cable_landing_MPC_vx_max: 2.
+      cable_landing_MPC_vy_max: 2.
+      cable_landing_MPC_vz_max: 1.
+      cable_landing_MPC_ax_max: 1.
+      cable_landing_MPC_ay_max: 1.
+      cable_landing_MPC_az_max: 1.
+      cable_landing_MPC_wx: 25.
+      cable_landing_MPC_wy: 25.
+      cable_landing_MPC_wz: 1.
+      cable_landing_MPC_wvx: 2.
+      cable_landing_MPC_wvy: 2.
+      cable_landing_MPC_wvz: 2.
+      cable_landing_MPC_wax: 0.01
+      cable_landing_MPC_way: 0.01
+      cable_landing_MPC_waz: 0.01
+      cable_landing_MPC_wjx: 0.1
+      cable_landing_MPC_wjy: 0.1
+      cable_landing_MPC_wjz: 0.1
+      cable_takeoff_MPC_vx_max: 2.
+      cable_takeoff_MPC_vy_max: 2.
+      cable_takeoff_MPC_vz_max: 2.
+      cable_takeoff_MPC_ax_max: 1.
+      cable_takeoff_MPC_ay_max: 1.
+      cable_takeoff_MPC_az_max: 1.
+      cable_takeoff_MPC_wx: 1.
+      cable_takeoff_MPC_wy: 1.
+      cable_takeoff_MPC_wz: 10.
+      cable_takeoff_MPC_wvx: 1.
+      cable_takeoff_MPC_wvy: 1.
+      cable_takeoff_MPC_wvz: 1.
+      cable_takeoff_MPC_wax: 0.01
+      cable_takeoff_MPC_way: 0.01
+      cable_takeoff_MPC_waz: 0.01
+      cable_takeoff_MPC_wjx: 0.1
+      cable_takeoff_MPC_wjy: 0.1
+      cable_takeoff_MPC_wjz: 0.1
 
 cable_drum_controller:
   cable_drum_controller:
     ros__parameters:
-      cable_drum_initial_gain: 15
-      cable_drum_initial_reference: 8
+      cable_drum_initial_gain: 12
+      cable_drum_initial_reference: 6
+
+double_cable_lander:
+  double_cable_lander:
+    ros__parameters:
+      under_cable_altitude_subtract: 1.
+      cable_takeoff_target_cable_distance: 1.
+      cable_drum_manual_duty_cycle: 50
+      cable_drum_manual_seconds: 5
+      cable_drum_tracking_gain: 15
+      cable_drum_tracking_reference: 7

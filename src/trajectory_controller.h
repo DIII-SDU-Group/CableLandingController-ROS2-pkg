@@ -33,6 +33,7 @@
 #include <tf2_ros/transform_listener.h>
 #include <tf2_ros/buffer.h>
 #include <tf2/exceptions.h>
+#include <tf2/convert.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 #include <geometry_msgs/msg/pose.hpp>
@@ -41,10 +42,14 @@
 
 #include "iii_interfaces/msg/control_state.hpp"
 #include "iii_interfaces/msg/powerline.hpp"
+
+#include "iii_interfaces/srv/set_general_target_yaw.hpp"
+
 #include "iii_interfaces/action/takeoff.hpp"
 #include "iii_interfaces/action/landing.hpp"
 #include "iii_interfaces/action/fly_to_position.hpp"
 #include "iii_interfaces/action/cable_landing.hpp"
+#include "iii_interfaces/action/cable_takeoff.hpp"
 
 #include "geometry.h"
 #include "blocking_queue.h"
@@ -83,7 +88,8 @@ enum state_t {
 	landing,
 	in_positional_flight,
 	during_cable_landing,
-	on_cable_armed
+	on_cable_armed,
+	during_cable_takeoff
 };
 
 enum request_type_t {
@@ -91,7 +97,8 @@ enum request_type_t {
 	takeoff_request,
 	landing_request,
 	fly_to_position_request,
-	cable_landing_request
+	cable_landing_request,
+	cable_takeoff_request
 };
 
 struct takeoff_request_params_t {
@@ -104,6 +111,10 @@ struct fly_to_position_request_params_t {
 
 struct cable_landing_request_params_t {
 	int cable_id;
+};
+
+struct cable_takeoff_request_params_t {
+	float target_cable_distance;
 };
 
 struct request_t {
@@ -160,6 +171,40 @@ enum request_queue_action_t {
 	if_match
 };
 
+enum MPC_mode_t {
+	positional,
+	cable_landing,
+	cable_takeoff
+};
+
+struct MPC_parameters_t {
+	double dt;
+	
+	double vx_max;
+	double vy_max;
+	double vz_max;
+
+	double ax_max;
+	double ay_max;
+	double az_max;
+
+	double wx;
+	double wy;
+	double wz;
+
+	double wvx;
+	double wvy;
+	double wvz;
+
+	double wax;
+	double way;
+	double waz;
+
+	double wjx;
+	double wjy;
+	double wjz;
+};
+
 /*****************************************************************************/
 // Class
 /*****************************************************************************/
@@ -178,8 +223,11 @@ public:
 	using CableLanding = iii_interfaces::action::CableLanding;
 	using GoalHandleCableLanding = rclcpp_action::ServerGoalHandle<CableLanding>;
 
-	TrajectoryController(const std::string & node_name="cable_landing_controller", 
-			const std::string & node_namespace="/cable_landing_controller", 
+	using CableTakeoff = iii_interfaces::action::CableTakeoff;
+	using GoalHandleCableTakeoff = rclcpp_action::ServerGoalHandle<CableTakeoff>;
+
+	TrajectoryController(const std::string & node_name="trajectory_controller", 
+			const std::string & node_namespace="/trajectory_controller", 
 			const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
 	~TrajectoryController();
 
@@ -228,6 +276,22 @@ private:
 	void handleAcceptedCableLanding(const std::shared_ptr<GoalHandleCableLanding> goal_handle);
 	void followCableLandingCompletion(const std::shared_ptr<GoalHandleCableLanding> goal_handle);
 
+	// Cable takeoff action:
+	rclcpp_action::Server<CableTakeoff>::SharedPtr cable_takeoff_server_;
+
+	rclcpp_action::GoalResponse handleGoalCableTakeoff(
+		const rclcpp_action::GoalUUID & uuid, 
+		std::shared_ptr<const CableTakeoff::Goal> goal
+	);
+	rclcpp_action::CancelResponse handleCancelCableTakeoff(const std::shared_ptr<GoalHandleCableTakeoff> goal_handle);
+	void handleAcceptedCableTakeoff(const std::shared_ptr<GoalHandleCableTakeoff> goal_handle);
+	void followCableTakeoffCompletion(const std::shared_ptr<GoalHandleCableTakeoff> goal_handle);
+
+    // Set yaw service:
+    rclcpp::Service<iii_interfaces::srv::SetGeneralTargetYaw>::SharedPtr set_yaw_service_;
+    void setYawServiceCallback(const std::shared_ptr<iii_interfaces::srv::SetGeneralTargetYaw::Request> request,
+                                    std::shared_ptr<iii_interfaces::srv::SetGeneralTargetYaw::Response> response);
+
 	// General member variables:
 	state_t state_ = init;
 
@@ -239,6 +303,10 @@ private:
 	vector_t odom_ang_vel_;
 	vector_t odom_pos_;
 	vector_t odom_vel_;
+	vector_t odom_last_vel_;
+	vector_t odom_acc_;
+
+	float target_yaw_ = 0;
 
 	std::vector<state4_t> planned_trajectory_;
 	std::vector<state4_t> planned_macro_trajectory_;
@@ -251,6 +319,7 @@ private:
 	std::mutex odometry_mutex_;
 	std::mutex planned_trajectory_mutex_;
 	std::mutex powerline_mutex_;
+	std::mutex target_yaw_mutex_;
 
     std::shared_ptr<tf2_ros::TransformListener> transform_listener_{nullptr};
     std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
@@ -320,16 +389,18 @@ private:
 	geometry_msgs::msg::PoseStamped loadPlannedTarget();
 	state4_t loadTargetCableState();
 
-	state4_t stepPositionMPC(state4_t vehicle_state, state4_t target_state, bool reset);
-	void threadFunctionPositionMPC(double *x, double *u, double *planned_traj, double *target, 
-		int reset_target, int reset_trajectory, int reset_bounds, int reset_weights);
+	state4_t stepMPC(state4_t vehicle_state, state4_t target_state, bool reset, MPC_mode_t mpc_mode);
+	void threadFunctionMPC(double *x, double *u, double *planned_traj, double *target, 
+		int reset_target, int reset_trajectory, int reset_bounds, int reset_weights, MPC_mode_t mpc_mode);
 
-	state4_t stepCableLandingMPC(state4_t vehicle_state, state4_t target_state, bool reset);
+	void loadPeriodMPC(MPC_parameters_t &mpc_params, MPC_mode_t mpc_mode);
+	void loadBoundsMPC(MPC_parameters_t &mpc_params, MPC_mode_t mpc_mode);
+	void loadWeightsMPC(MPC_parameters_t &mpc_params, MPC_mode_t mpc_mode);
 
 	void clearPlannedTrajectory();
 	void setTrajectoryTarget(state4_t target);
 
-	bool updateTargetCablePose(int new_id = -1);
+	bool updateTargetCablePose(state4_t vehicle_state, int new_id = -1);
 	void clearTargetCable();
 
 };

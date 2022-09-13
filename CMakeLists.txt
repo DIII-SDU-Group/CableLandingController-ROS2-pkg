@@ -85,6 +85,20 @@ ament_target_dependencies(cable_drum_controller
 )
 install(TARGETS cable_drum_controller DESTINATION lib/${PROJECT_NAME})
 
+add_executable(double_cable_lander
+  src/double_cable_lander.cpp
+)
+ament_target_dependencies(double_cable_lander
+  rclcpp
+  iii_interfaces
+  std_msgs
+  geometry_msgs
+  tf2
+  tf2_ros
+  tf2_geometry_msgs
+)
+install(TARGETS double_cable_lander DESTINATION lib/${PROJECT_NAME})
+
 # Install launch files
 install(DIRECTORY
   launch

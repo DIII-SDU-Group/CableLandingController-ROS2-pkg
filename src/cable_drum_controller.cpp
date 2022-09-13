@@ -77,6 +77,8 @@ CableDrumController::CableDrumController(const std::string & node_name,
 
 CableDrumController::~CableDrumController() {
 
+    XCabledrumbridge_Set_mode_CPU(&cdb_, 0);
+
     XCabledrumbridge_Release(&cdb_);
 
 }
