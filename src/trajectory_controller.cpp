@@ -30,6 +30,7 @@ TrajectoryController::TrajectoryController(const std::string & node_name,
 	this->declare_parameter<float>("target_cable_set_point_truncate_distance_threshold", 0.1);
 
 	this->declare_parameter<double>("MPC_dt", 0.1);
+	this->declare_parameter<int>("MPC_hp", 20);
 
 	this->declare_parameter<double>("position_MPC_vx_max", 10.);
 	this->declare_parameter<double>("position_MPC_vy_max", 10.);

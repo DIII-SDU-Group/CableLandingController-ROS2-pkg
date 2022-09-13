@@ -17,21 +17,13 @@
 // Type Definitions
 namespace pos_MPC {
 struct struct10_T {
-  double Uopt[48];
-  double Yopt[96];
-  double Xopt[144];
-  double Topt[16];
+  double Uopt[63];
+  double Yopt[126];
+  double Xopt[189];
+  double Topt[21];
   double Slack;
   double Iterations;
   double Cost;
-};
-
-struct struct4_T {
-  double Plant[6];
-  double Disturbance[3];
-  double LastMove[3];
-  double Covariance[81];
-  boolean_T iA[180];
 };
 
 struct struct6_T {
@@ -56,6 +48,14 @@ struct struct5_T {
   struct6_T signals;
   struct7_T weights;
   struct8_T limits;
+};
+
+struct struct4_T {
+  double Plant[6];
+  double Disturbance[3];
+  double LastMove[3];
+  double Covariance[81];
+  boolean_T iA[240];
 };
 
 } // namespace pos_MPC

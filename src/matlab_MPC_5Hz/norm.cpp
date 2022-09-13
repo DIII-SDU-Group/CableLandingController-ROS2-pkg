@@ -16,13 +16,13 @@
 // Function Definitions
 namespace pos_MPC {
 namespace coder {
-double b_norm(const double x[46])
+double b_norm(const double x[61])
 {
   double scale;
   double y;
   y = 0.0;
   scale = 3.3121686421112381E-170;
-  for (int k{0}; k < 46; k++) {
+  for (int k{0}; k < 61; k++) {
     double absxk;
     absxk = std::abs(x[k]);
     if (absxk > scale) {

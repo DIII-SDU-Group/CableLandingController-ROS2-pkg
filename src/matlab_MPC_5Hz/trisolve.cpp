@@ -16,23 +16,23 @@
 namespace pos_MPC {
 namespace coder {
 namespace internal {
-void trisolve(const double A[2116], double B[2116])
+void trisolve(const double A[3721], double B[3721])
 {
-  for (int j{0}; j < 46; j++) {
+  for (int j{0}; j < 61; j++) {
     int jBcol;
-    jBcol = 46 * j - 1;
-    for (int k{0}; k < 46; k++) {
+    jBcol = 61 * j - 1;
+    for (int k{0}; k < 61; k++) {
       double d;
       int i;
       int kAcol;
-      kAcol = 46 * k - 1;
+      kAcol = 61 * k - 1;
       i = (k + jBcol) + 1;
       d = B[i];
       if (d != 0.0) {
         int i1;
         B[i] = d / A[(k + kAcol) + 1];
         i1 = k + 2;
-        for (int b_i{i1}; b_i < 47; b_i++) {
+        for (int b_i{i1}; b_i < 62; b_i++) {
           int i2;
           i2 = b_i + jBcol;
           B[i2] -= B[i] * A[b_i + kAcol];

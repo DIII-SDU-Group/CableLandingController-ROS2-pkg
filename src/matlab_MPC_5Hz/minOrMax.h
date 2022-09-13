@@ -20,9 +20,9 @@
 namespace pos_MPC {
 namespace coder {
 namespace internal {
-double maximum(const double x[46]);
+double maximum(const double x[61]);
 
-double minimum(const double x[46]);
+double minimum(const double x[61]);
 
 } // namespace internal
 } // namespace coder

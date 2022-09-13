@@ -17,8 +17,8 @@ namespace pos_MPC {
 namespace coder {
 namespace internal {
 namespace blas {
-void xgerc(int m, int n, double alpha1, int ix0, const double y[46],
-           double A[2116], int ia0)
+void xgerc(int m, int n, double alpha1, int ix0, const double y[61],
+           double A[3721], int ia0)
 {
   if (!(alpha1 == 0.0)) {
     int jA;
@@ -34,7 +34,7 @@ void xgerc(int m, int n, double alpha1, int ix0, const double y[46],
           A[ijA - 1] += A[((ix0 + ijA) - jA) - 1] * temp;
         }
       }
-      jA += 46;
+      jA += 61;
     }
   }
 }

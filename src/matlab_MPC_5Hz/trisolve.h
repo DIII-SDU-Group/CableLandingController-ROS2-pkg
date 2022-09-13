@@ -20,7 +20,7 @@
 namespace pos_MPC {
 namespace coder {
 namespace internal {
-void trisolve(const double A[2116], double B[2116]);
+void trisolve(const double A[3721], double B[3721]);
 
 }
 } // namespace coder

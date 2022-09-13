@@ -18,7 +18,7 @@ namespace pos_MPC {
 namespace coder {
 namespace internal {
 namespace blas {
-double xnrm2(int n, const double x[2116], int ix0)
+double xnrm2(int n, const double x[3721], int ix0)
 {
   double y;
   y = 0.0;

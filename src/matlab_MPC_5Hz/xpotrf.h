@@ -21,7 +21,7 @@ namespace pos_MPC {
 namespace coder {
 namespace internal {
 namespace lapack {
-int xpotrf(double A[2116]);
+int xpotrf(double A[3721]);
 
 }
 } // namespace internal

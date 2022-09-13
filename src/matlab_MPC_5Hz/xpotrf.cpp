@@ -19,7 +19,7 @@ namespace pos_MPC {
 namespace coder {
 namespace internal {
 namespace lapack {
-int xpotrf(double A[2116])
+int xpotrf(double A[3721])
 {
   int info;
   int j;
@@ -27,16 +27,16 @@ int xpotrf(double A[2116])
   info = 0;
   j = 0;
   exitg1 = false;
-  while ((!exitg1) && (j < 46)) {
+  while ((!exitg1) && (j < 61)) {
     double c;
     double ssq;
     int idxAjj;
     int k;
-    idxAjj = j + j * 46;
+    idxAjj = j + j * 61;
     ssq = 0.0;
     if (j >= 1) {
       for (k = 0; k < j; k++) {
-        c = A[j + k * 46];
+        c = A[j + k * 61];
         ssq += c * c;
       }
     }
@@ -44,18 +44,18 @@ int xpotrf(double A[2116])
     if (ssq > 0.0) {
       ssq = std::sqrt(ssq);
       A[idxAjj] = ssq;
-      if (j + 1 < 46) {
+      if (j + 1 < 61) {
         int i;
         int ia0;
         int idxAjp1j;
         ia0 = j + 2;
         idxAjp1j = idxAjj + 2;
         if (j != 0) {
-          i = (j + 46 * (j - 1)) + 2;
-          for (int iac{ia0}; iac <= i; iac += 46) {
+          i = (j + 61 * (j - 1)) + 2;
+          for (int iac{ia0}; iac <= i; iac += 61) {
             k = iac - j;
-            c = -A[j + div_nde_s32_floor(k - 2, 46) * 46];
-            k += 44;
+            c = -A[j + div_nde_s32_floor(k - 2, 61) * 61];
+            k += 59;
             for (int ia{iac}; ia <= k; ia++) {
               int i1;
               i1 = ((idxAjj + ia) - iac) + 1;
@@ -64,7 +64,7 @@ int xpotrf(double A[2116])
           }
         }
         ssq = 1.0 / ssq;
-        i = (idxAjj - j) + 46;
+        i = (idxAjj - j) + 61;
         for (k = idxAjp1j; k <= i; k++) {
           A[k - 1] *= ssq;
         }

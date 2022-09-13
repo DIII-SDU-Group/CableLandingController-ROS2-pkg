@@ -17,7 +17,7 @@
 namespace pos_MPC {
 namespace coder {
 namespace internal {
-double maximum(const double x[46])
+double maximum(const double x[61])
 {
   double ex;
   int idx;
@@ -29,7 +29,7 @@ double maximum(const double x[46])
     idx = 0;
     k = 2;
     exitg1 = false;
-    while ((!exitg1) && (k < 47)) {
+    while ((!exitg1) && (k < 62)) {
       if (!std::isnan(x[k - 1])) {
         idx = k;
         exitg1 = true;
@@ -43,7 +43,7 @@ double maximum(const double x[46])
   } else {
     ex = x[idx - 1];
     idx++;
-    for (k = idx; k < 47; k++) {
+    for (k = idx; k < 62; k++) {
       double d;
       d = x[k - 1];
       if (ex < d) {
@@ -54,7 +54,7 @@ double maximum(const double x[46])
   return ex;
 }
 
-double minimum(const double x[46])
+double minimum(const double x[61])
 {
   double ex;
   int idx;
@@ -66,7 +66,7 @@ double minimum(const double x[46])
     idx = 0;
     k = 2;
     exitg1 = false;
-    while ((!exitg1) && (k < 47)) {
+    while ((!exitg1) && (k < 62)) {
       if (!std::isnan(x[k - 1])) {
         idx = k;
         exitg1 = true;
@@ -80,7 +80,7 @@ double minimum(const double x[46])
   } else {
     ex = x[idx - 1];
     idx++;
-    for (k = idx; k < 47; k++) {
+    for (k = idx; k < 62; k++) {
       double d;
       d = x[k - 1];
       if (ex > d) {

@@ -19,7 +19,7 @@
 // Function Declarations
 namespace pos_MPC {
 namespace coder {
-double b_norm(const double x[46]);
+double b_norm(const double x[61]);
 
 }
 } // namespace pos_MPC

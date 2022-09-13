@@ -21,8 +21,8 @@ namespace pos_MPC {
 namespace coder {
 namespace internal {
 namespace blas {
-void xgerc(int m, int n, double alpha1, int ix0, const double y[46],
-           double A[2116], int ia0);
+void xgerc(int m, int n, double alpha1, int ix0, const double y[61],
+           double A[3721], int ia0);
 
 }
 } // namespace internal

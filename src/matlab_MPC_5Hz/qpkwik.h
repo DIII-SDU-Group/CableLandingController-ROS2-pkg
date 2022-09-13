@@ -19,9 +19,9 @@
 // Function Declarations
 namespace pos_MPC {
 namespace coder {
-void qpkwik(const double Linv[2116], const double Hinv[2116],
-            const double f[46], const double Ac[8280], const double b[180],
-            short iA[180], double x[46], double lambda[180], double *status);
+void qpkwik(const double Linv[3721], const double Hinv[3721],
+            const double f[61], const double Ac[14640], const double b[240],
+            short iA[240], double x[61], double lambda[240], double *status);
 
 }
 } // namespace pos_MPC
