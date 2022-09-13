@@ -38,12 +38,12 @@ trajectory_controller:
       cable_landing_MPC_ax_max: 1.
       cable_landing_MPC_ay_max: 1.
       cable_landing_MPC_az_max: 1.
-      cable_landing_MPC_wx: 25.
-      cable_landing_MPC_wy: 25.
+      cable_landing_MPC_wx: 15.
+      cable_landing_MPC_wy: 15.
       cable_landing_MPC_wz: 1.
       cable_landing_MPC_wvx: 2.
       cable_landing_MPC_wvy: 2.
-      cable_landing_MPC_wvz: 2.
+      cable_landing_MPC_wvz: 1.
       cable_landing_MPC_wax: 0.01
       cable_landing_MPC_way: 0.01
       cable_landing_MPC_waz: 0.01
