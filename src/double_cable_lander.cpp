@@ -34,23 +34,17 @@ DoubleCableLander::DoubleCableLander(const std::string & node_name,
 
     // Action clients:
     this->fly_to_position_client_ = rclcpp_action::create_client<FlyToPosition>(
-        this, "/trajectory_controller/fly_to_position"
+       this, "/trajectory_controller/fly_to_position"
     );
     this->cable_landing_client_ = rclcpp_action::create_client<CableLanding>(
-        this, "/trajectory_controller/cable_landing"
+       this, "/trajectory_controller/cable_landing"
     );
     this->cable_takeoff_client_ = rclcpp_action::create_client<CableTakeoff>(
-        this, "/trajectory_controller/cable_takeoff"
+       this, "/trajectory_controller/cable_takeoff"
     );
     this->drum_manual_roll_client_ = rclcpp_action::create_client<DrumManualRoll>(
-        this, "/cable_drum_controller/drum_manual_roll"
+       this, "/cable_drum_controller/drum_manual_roll"
     );
-
-    // Service clients:
-    this->drum_set_gain_client_ = this->create_client<iii_interfaces::srv::DrumSetGain>("/cable_drum_controller/drum_set_gain");
-    this->drum_set_mode_client_ = this->create_client<iii_interfaces::srv::DrumSetMode>("/cable_drum_controller/drum_set_mode");
-    this->drum_set_reference_client_ = this->create_client<iii_interfaces::srv::DrumSetReference>("/cable_drum_controller/drum_set_reference");
-    this->set_general_target_yaw_client_ = this->create_client<iii_interfaces::srv::SetGeneralTargetYaw>("/trajectory_controller/set_general_target_yaw");
 
 	// DoubleCableLanding action server:
 	this->double_cable_landing_server_ = rclcpp_action::create_server<DoubleCableLanding>(
@@ -61,6 +55,21 @@ DoubleCableLander::DoubleCableLander(const std::string & node_name,
 		std::bind(&DoubleCableLander::handleAcceptedDoubleCableLanding, this, std::placeholders::_1)
 	);
 
+
+    // Service clients:
+    this->drum_set_gain_client_ = this->create_client<iii_interfaces::srv::DrumSetGain>("/cable_drum_controller/drum_set_gain");
+    this->drum_set_mode_client_ = this->create_client<iii_interfaces::srv::DrumSetMode>("/cable_drum_controller/drum_set_mode");
+    this->drum_set_reference_client_ = this->create_client<iii_interfaces::srv::DrumSetReference>("/cable_drum_controller/drum_set_reference");
+
+    // auto hej = this->create_client<iii_interfaces::srv::SetGeneralTargetYaw>("/trajectory_controller/set_general_target_yaw");
+
+    // this->target_yaw_client_ = hej;
+
+    std::cout << "hej\n";
+
+	publish_timer_ = this->create_wall_timer(
+		500ms, std::bind(&DoubleCableLander::publishCallback, this));
+
 }
 
 DoubleCableLander::~DoubleCableLander() {
@@ -70,7 +79,11 @@ DoubleCableLander::~DoubleCableLander() {
 rclcpp_action::GoalResponse DoubleCableLander::handleGoalDoubleCableLanding(
         const rclcpp_action::GoalUUID & uuid, std::shared_ptr<const DoubleCableLanding::Goal> goal) {
 
+    std::cout << "hej2\n";
+
     if (state_ != idle) {
+
+        std::cout << "Reject, not idle\n";
 
         return rclcpp_action::GoalResponse::REJECT;
 
@@ -99,6 +112,8 @@ rclcpp_action::GoalResponse DoubleCableLander::handleGoalDoubleCableLanding(
 
     if (!first_id_found || !second_id_found) {
 
+        std::cout << "Reject, ids not found\n";
+
         return rclcpp_action::GoalResponse::REJECT;
 
     }
@@ -122,6 +137,10 @@ void DoubleCableLander::handleAcceptedDoubleCableLanding(const std::shared_ptr<G
 }
 
 void DoubleCableLander::followDoubleCableLandingCompletion(const std::shared_ptr<GoalHandleDoubleCableLanding> goal_handle) {
+
+    std::cout << "starting\n";
+
+    // this->target_yaw_client_ = this->create_client<iii_interfaces::srv::SetGeneralTargetYaw>("/trajectory_controller/set_general_target_yaw");
 
 	auto feedback = std::make_shared<DoubleCableLanding::Feedback>();
 	auto result = std::make_shared<DoubleCableLanding::Result>();
@@ -178,7 +197,8 @@ void DoubleCableLander::followDoubleCableLandingCompletion(const std::shared_ptr
         float under_cable_altitude_subtract;
         this->get_parameter("under_cable_altitude_subtract", under_cable_altitude_subtract);
 
-        pose = cable_pose;
+        pose.header.frame_id = cable_pose.header.frame_id;
+        pose.pose = cable_pose.pose;
         pose.pose.position.z -= under_cable_altitude_subtract;
         pose = tf_buffer_->transform(pose, "world");
 
@@ -233,11 +253,17 @@ void DoubleCableLander::followDoubleCableLandingCompletion(const std::shared_ptr
 
     auto fly_to_under_cable_blocking = [this, trajectory_goal_wait](geometry_msgs::msg::PoseStamped pose) -> bool {
 
+        std::cout << "c.1\n";
+
         if (!this->fly_to_position_client_->wait_for_action_server()) {
+
+        std::cout << "c.2\n";
 
             return false;
 
         }
+
+        std::cout << "c.3\n";
 
         trajectory_goal_response_ = 0;
         trajectory_goal_result_ = 0;
@@ -254,32 +280,48 @@ void DoubleCableLander::followDoubleCableLandingCompletion(const std::shared_ptr
 
         this->fly_to_position_client_->async_send_goal(goal_msg, send_goal_options);
 
+        std::cout << "c.4\n";
+
         return trajectory_goal_wait();
 
     };
 
     auto land_on_cable_blocking = [this, trajectory_goal_wait](int cable_id) -> bool {
 
+        std::cout << "d.1\n";
+
         if (!this->cable_landing_client_->wait_for_action_server()) {
+
+        std::cout << "d.2\n";
 
             return false;
 
         }
+
+        std::cout << "d.3\n";
 
         trajectory_goal_response_ = 0;
         trajectory_goal_result_ = 0;
 
         auto goal_msg = CableLanding::Goal();
 
+        std::cout << "d.4\n";
+
         goal_msg.target_cable_id = cable_id;
 
         auto send_goal_options = rclcpp_action::Client<CableLanding>::SendGoalOptions();
+
+        std::cout << "d.5\n";
 
         send_goal_options.goal_response_callback = std::bind(&DoubleCableLander::cableLandingGoalResponseCallback, this, _1);
         send_goal_options.feedback_callback = std::bind(&DoubleCableLander::cableLandingFeedbackCallback, this, _1, _2);
         send_goal_options.result_callback = std::bind(&DoubleCableLander::cableLandingResultCallback, this, _1);
 
+        std::cout << "d.6\n";
+
         this->cable_landing_client_->async_send_goal(goal_msg, send_goal_options);
+
+        std::cout << "d.7\n";
 
         return trajectory_goal_wait();
 
@@ -460,17 +502,29 @@ void DoubleCableLander::followDoubleCableLandingCompletion(const std::shared_ptr
 
     auto set_general_target_yaw = [this](iii_interfaces::msg::Powerline powerline, int first_cable_id, int second_cable_id) -> bool {
 
+        std::cout << "a.1\n";
+
         vector_t first_cable_pos;
         vector_t second_cable_pos;
 
         bool first_cable_found = false;
         bool second_cable_found = false;
 
+        std::cout << "a.2\n";
+
         for (int i = 0; i < powerline.count; i++) {
+
+        std::cout << "a.3\n";
 
             if (powerline.ids[i] == first_cable_id) {
 
-                geometry_msgs::msg::PoseStamped transformed_pose = tf_buffer_->transform(powerline.poses[i], "world");
+        std::cout << "a.4\n";
+
+                geometry_msgs::msg::PoseStamped tmp_pose;
+                tmp_pose.header.frame_id = powerline.poses[i].header.frame_id;
+                tmp_pose.pose = powerline.poses[i].pose;
+
+                geometry_msgs::msg::PoseStamped transformed_pose = tf_buffer_->transform(tmp_pose, "world");
 
                 first_cable_pos(0) = transformed_pose.pose.position.x;
                 first_cable_pos(1) = transformed_pose.pose.position.y;
@@ -478,9 +532,17 @@ void DoubleCableLander::followDoubleCableLandingCompletion(const std::shared_ptr
 
                 first_cable_found = true;
 
+        std::cout << "a.5\n";
+
             } else if (powerline.ids[i] == second_cable_id) {
 
-                geometry_msgs::msg::PoseStamped transformed_pose = tf_buffer_->transform(powerline.poses[i], "world");
+        std::cout << "a.6\n";
+
+                geometry_msgs::msg::PoseStamped tmp_pose;
+                tmp_pose.header.frame_id = powerline.poses[i].header.frame_id;
+                tmp_pose.pose = powerline.poses[i].pose;
+
+                geometry_msgs::msg::PoseStamped transformed_pose = tf_buffer_->transform(tmp_pose, "world");
 
                 second_cable_pos(0) = transformed_pose.pose.position.x;
                 second_cable_pos(1) = transformed_pose.pose.position.y;
@@ -488,14 +550,20 @@ void DoubleCableLander::followDoubleCableLandingCompletion(const std::shared_ptr
 
                 second_cable_found = true;
 
+        std::cout << "a.7\n";
+
             }
 
             if (first_cable_found && second_cable_found)
                 break;
         }
 
+        std::cout << "a.8\n";
+
         if (!first_cable_found || !second_cable_found)
             return false;
+
+        std::cout << "a.9\n";
 
         vector_t second_to_first_cable_vec = first_cable_pos - second_cable_pos;
         second_to_first_cable_vec(2) = 0;
@@ -508,9 +576,13 @@ void DoubleCableLander::followDoubleCableLandingCompletion(const std::shared_ptr
             0
         );
 
-        float target_yaw_cable_drum = atan2(tmp_vec(0), tmp_vec(1));
+        std::cout << "a.10\n";
+
+        float target_yaw_cable_drum = atan2(tmp_vec(0), tmp_vec(1)) + M_PI_2;
 
         geometry_msgs::msg::TransformStamped T_drone_to_cable_drum = tf_buffer_->lookupTransform("cable_drum", "drone", tf2::TimePointZero);
+
+        std::cout << "a.11\n";
 
         quat_t q(
             T_drone_to_cable_drum.transform.rotation.w,
@@ -529,26 +601,52 @@ void DoubleCableLander::followDoubleCableLandingCompletion(const std::shared_ptr
         auto request = std::make_shared<iii_interfaces::srv::SetGeneralTargetYaw::Request>();
         request->target_yaw = target_yaw;
 
-        while(!this->set_general_target_yaw_client_->wait_for_service(100ms)) {
+        std::cout << "a.12\n";
+
+        auto target_yaw_client = this->create_client<iii_interfaces::srv::SetGeneralTargetYaw>("/trajectory_controller/set_general_target_yaw");
+
+        while(!target_yaw_client->wait_for_service(100ms)) {
+
+        std::cout << "a.13\n";
 
             if (!rclcpp::ok()) {
 
                 RCLCPP_FATAL(this->get_logger(), "Interrupted while waiting for service, exiting...");
 
+        std::cout << "a.14\n";
+
                 return false;
 
             }
+
+        std::cout << "a.15\n";
         }
 
-        auto result = this->set_general_target_yaw_client_->async_send_request(request);
+        std::cout << "a.16\n";
 
-        bool success = rclcpp::spin_until_future_complete(this->get_node_base_interface(), result) == rclcpp::executor::FutureReturnCode::SUCCESS;
+        auto result = target_yaw_client->async_send_request(request);
+
+        std::cout << "a.17\n";
+
+        result.wait();
+        
+        bool success = result.get().get()->success;
+
+        //bool success = result.get() == rclcpp::executor::FutureReturnCode::SUCCESS;
+        // bool success = rclcpp::spin_until_future_complete(this, result) == rclcpp::executor::FutureReturnCode::SUCCESS;
+
+        if (success) std::cout << "ololoo\n";
+        else std::cout << "aalalalal\n";
+
+        std::cout << "a.18\n";
 
         return success;
 
     };
 
     while(!exit) {
+
+        std::cout << "1\n";
 
         if (goal_handle->is_canceling()) {
 
@@ -568,14 +666,22 @@ void DoubleCableLander::followDoubleCableLandingCompletion(const std::shared_ptr
         default:
         case idle:
 
+            std::cout << "2\n";
+
             powerline = getPowerline();
+
+            std::cout << "2.1\n";
 
             if (set_general_target_yaw(powerline, first_cable_id_, second_cable_id_) 
                     && compute_pose_under_cable(powerline, first_cable_id_, under_cable_pose)) {
+
+            std::cout << "2.2\n";
                 
                 state_ = fly_under_first_cable;
 
             } else {
+
+            std::cout << "2.3\n";
 
                 abort_goal();
 
@@ -584,6 +690,8 @@ void DoubleCableLander::followDoubleCableLandingCompletion(const std::shared_ptr
             break;
 
         case fly_under_first_cable:
+
+        std::cout << "3\n";
 
             if (fly_to_under_cable_blocking(under_cable_pose)) {
 
@@ -599,13 +707,19 @@ void DoubleCableLander::followDoubleCableLandingCompletion(const std::shared_ptr
 
         case land_on_first_cable:
 
+        std::cout << "4\n";
+
             if (land_on_cable_blocking(first_cable_id_)) {
+
+                std::cout << "4.1\n";
 
                 set_cable_drum_manual();
 
                 state_ = leave_first_cable;
 
             } else {
+
+                std::cout << "4.2\n";
 
                 abort_goal();
 
@@ -614,6 +728,8 @@ void DoubleCableLander::followDoubleCableLandingCompletion(const std::shared_ptr
             break;
 
         case leave_first_cable:
+
+        std::cout << "5\n";
 
             if (leave_cable_blocking()) {
 
@@ -642,6 +758,8 @@ void DoubleCableLander::followDoubleCableLandingCompletion(const std::shared_ptr
 
         case fly_under_second_cable:
 
+        std::cout << "6\n";
+
             if (fly_to_under_cable_blocking(under_cable_pose)) {
 
                 state_ = land_on_second_cable;
@@ -655,6 +773,8 @@ void DoubleCableLander::followDoubleCableLandingCompletion(const std::shared_ptr
             break;
 
         case land_on_second_cable:
+
+        std::cout << "7\n";
 
             if (land_on_cable_blocking(second_cable_id_)) {
 
@@ -712,12 +832,23 @@ void DoubleCableLander::powerlineCallback(iii_interfaces::msg::Powerline::Shared
 
 void DoubleCableLander::flyToPositionGoalResponseCallback(std::shared_future<GoalHandleFlyToPosition::SharedPtr> future) {
 
+    std::cout << "What do asd\n";
+
     auto goal_handle = future.get();
 
-    if (!goal_handle) 
+    std::cout << "What do asd\n";
+
+    if (goal_handle) {
+
         trajectory_goal_response_ = 1;
-    else
+
+        std::cout << "success goal\n";
+    }
+    else {
+
         trajectory_goal_response_ = -1;
+        std::cout << "fail goal\n";
+    }
 
 }
 
@@ -741,7 +872,7 @@ void DoubleCableLander::cableLandingGoalResponseCallback(std::shared_future<Goal
 
     auto goal_handle = future.get();
 
-    if (!goal_handle)
+    if (goal_handle)
         trajectory_goal_response_ = 1;
     else
         trajectory_goal_response_ = -1;
@@ -757,6 +888,8 @@ void DoubleCableLander::cableLandingFeedbackCallback(GoalHandleCableLanding::Sha
 
 void DoubleCableLander::cableLandingResultCallback(const GoalHandleCableLanding::WrappedResult &result) {
 
+    std::cout << "Cable landing result callback\n";
+
     if (result.code == rclcpp_action::ResultCode::SUCCEEDED)
         trajectory_goal_result_ = 1;
     else
@@ -768,7 +901,7 @@ void DoubleCableLander::cableTakeoffGoalResponseCallback(std::shared_future<Goal
 
     auto goal_handle = future.get();
 
-    if (!goal_handle)
+    if (goal_handle)
         trajectory_goal_response_ = 1;
     else
         trajectory_goal_response_ = -1;
@@ -795,7 +928,7 @@ void DoubleCableLander::drumManualRollGoalResponseCallback(std::shared_future<Go
 
     auto goal_handle = future.get();
 
-    if (!goal_handle)
+    if (goal_handle)
         trajectory_goal_response_ = 1;
     else
         trajectory_goal_response_ = -1;
@@ -815,6 +948,47 @@ void DoubleCableLander::drumManualRollResultCallback(const GoalHandleDrumManualR
         trajectory_goal_result_ = 1;
     else   
         trajectory_goal_result_ = -1;
+
+}
+
+void DoubleCableLander::publishCallback() {
+
+    std_msgs::msg::String msg;
+    
+    switch(state_) {
+
+    default:
+    case idle:
+        msg.data = "idle";
+        break;
+
+    case fly_under_first_cable:
+        msg.data = "fly under first cable";
+        break;
+
+    case land_on_first_cable:
+        msg.data = "land on first cable";
+        break;
+
+    case leave_first_cable:
+        msg.data = "leave first cable";
+        break;
+
+    case fly_under_second_cable:
+        msg.data = "fly under second cable";
+        break;
+
+    case land_on_second_cable:
+        msg.data = "land on second cable";
+        break;
+
+    case on_second_cable:
+        msg.data = "on second cable";
+        break;
+
+    }
+
+    state_pub_->publish(msg);
 
 }
 

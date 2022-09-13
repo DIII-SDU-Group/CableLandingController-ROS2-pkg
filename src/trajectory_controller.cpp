@@ -1455,7 +1455,8 @@ void TrajectoryController::stateMachineCallback() {
 
 			setTrajectoryTarget(fixed_reference);
 
-			set_point = stepMPC(prev_veh_state, fixed_reference, true, positional);
+			//set_point = stepMPC(prev_veh_state, fixed_reference, true, positional);
+			set_point = setZeroVelocity(fixed_reference);
 
 			state_ = in_positional_flight;
 
@@ -1565,7 +1566,8 @@ void TrajectoryController::stateMachineCallback() {
 
 			rejectPendingRequest();
 
-			set_point = stepMPC(veh_state, fixed_reference, false, positional);
+			//set_point = stepMPC(veh_state, fixed_reference, false, positional);
+			set_point = setZeroVelocity(fixed_reference);
 			// set_point = fixed_reference;
 
 		}

@@ -114,7 +114,7 @@ private:
     rclcpp::Client<iii_interfaces::srv::DrumSetGain>::SharedPtr drum_set_gain_client_;
     rclcpp::Client<iii_interfaces::srv::DrumSetMode>::SharedPtr drum_set_mode_client_;
     rclcpp::Client<iii_interfaces::srv::DrumSetReference>::SharedPtr drum_set_reference_client_;
-    rclcpp::Client<iii_interfaces::srv::SetGeneralTargetYaw>::SharedPtr set_general_target_yaw_client_;
+    rclcpp::Client<iii_interfaces::srv::SetGeneralTargetYaw>::SharedPtr target_yaw_client_;
 
     // Subsciptions:
 	rclcpp::Subscription<iii_interfaces::msg::Powerline>::SharedPtr powerline_sub_;
@@ -176,6 +176,9 @@ private:
     void drumManualRollFeedbackCallback(GoalHandleDrumManualRoll::SharedPtr, const std::shared_ptr<const DrumManualRoll::Feedback> feedback);
     void drumManualRollResultCallback(const GoalHandleDrumManualRoll::WrappedResult &result);
 
+    // Timed
+	rclcpp::TimerBase::SharedPtr publish_timer_;
+    void publishCallback();
 
 };
 
