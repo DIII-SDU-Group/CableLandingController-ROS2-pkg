@@ -2412,6 +2412,12 @@ state4_t TrajectoryController::stepMPC(state4_t vehicle_state, state4_t target_s
 
 	}
 
+	if (reset_trajectory) {
+
+		this->get_parameter("position_MPC_dt", dt);
+
+	}
+
 	// Step:
 
 	auto resetTraj = [&]() -> void {
@@ -2456,20 +2462,19 @@ state4_t TrajectoryController::stepMPC(state4_t vehicle_state, state4_t target_s
 		}
 	}
 
-	for (int i = 0; i < 3; i++) MPC_x_[i] = vehicle_state(i);
-	for (int i = 3; i < 6; i++) MPC_x_[i] = vehicle_state(i+1);
+	// No state progression:
+	//for (int i = 0; i < 3; i++) MPC_x_[i] = vehicle_state(i);
+	//for (int i = 3; i < 6; i++) MPC_x_[i] = vehicle_state(i+1);
+
+	// With state progression:
+	for (int i = 0; i < 3; i++) MPC_x_[i] = vehicle_state(i) + vehicle_state(i+4)*dt + 0.5*u[i]*dt*dt;
+	for (int i = 0; i < 3; i++) MPC_x_[i] = vehicle_state(i+4) + u[i]*dt;
 
 	prev_vehicle_state = vehicle_state;
 
 	MPC_thread_ = std::thread( &TrajectoryController::threadFunctionMPC, this,
 					MPC_x_, MPC_u_, MPC_planned_traj_, target, reset_target, reset_trajectory, reset_bounds, reset_weights, mpc_mode);
 
-
-	if (reset_trajectory) {
-
-		this->get_parameter("position_MPC_dt", dt);
-
-	}
 
 	// Output:
 
