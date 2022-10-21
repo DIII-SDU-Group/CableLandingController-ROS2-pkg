@@ -16,38 +16,38 @@ CableDrumController::CableDrumController(const std::string & node_name,
 	this->declare_parameter<uint8_t>("cable_drum_initial_reference", 0b1000);
 
     // FPGA init:
-    int status;
-    status = XCabledrumbridge_Initialize(&cdb_, "CableDrumBridge");
+    // int status;
+    // status = XCabledrumbridge_Initialize(&cdb_, "CableDrumBridge");
 
-    if (status == XST_DEVICE_NOT_FOUND) {
+    // if (status == XST_DEVICE_NOT_FOUND) {
 
-        RCLCPP_FATAL(this->get_logger(), "CableDrumBridge device not found!");
+    //     RCLCPP_FATAL(this->get_logger(), "CableDrumBridge device not found!");
 
-    } else if (status == XST_OPEN_DEVICE_FAILED) {
+    // } else if (status == XST_OPEN_DEVICE_FAILED) {
 
-        RCLCPP_FATAL(this->get_logger(), "CableDrumBridge open device failed!");
+    //     RCLCPP_FATAL(this->get_logger(), "CableDrumBridge open device failed!");
 
-    } else if (status == XST_SUCCESS) {
+    // } else if (status == XST_SUCCESS) {
 
-        RCLCPP_INFO(this->get_logger(), "CableDrumBridge device opened successfully");
+    //     RCLCPP_INFO(this->get_logger(), "CableDrumBridge device opened successfully");
 
-    } else {
+    // } else {
 
-        RCLCPP_FATAL(this->get_logger(), "CableDrumBridge unknown error while initializing");
+    //     RCLCPP_FATAL(this->get_logger(), "CableDrumBridge unknown error while initializing");
 
-    }
+    // }
 
-    mode_ = PARAM_MODE_OFF;
-    direction_ = PARAM_DIR_OUT;
-    duty_cycle_ = 0;
-    this->get_parameter("cable_drum_initial_reference", reference_);
-    this->get_parameter("cable_drum_initial_gain", gain_);
+    // mode_ = PARAM_MODE_OFF;
+    // direction_ = PARAM_DIR_OUT;
+    // duty_cycle_ = 0;
+    // this->get_parameter("cable_drum_initial_reference", reference_);
+    // this->get_parameter("cable_drum_initial_gain", gain_);
 
-    XCabledrumbridge_Set_mode_CPU(&cdb_, mode_);
-    XCabledrumbridge_Set_duty_cycle_CPU(&cdb_, duty_cycle_);
-    XCabledrumbridge_Set_man_dir_CPU(&cdb_, direction_);
-    XCabledrumbridge_Set_ref_flex_CPU(&cdb_, reference_);
-    XCabledrumbridge_Set_gain_CPU(&cdb_, gain_);
+    // XCabledrumbridge_Set_mode_CPU(&cdb_, mode_);
+    // XCabledrumbridge_Set_duty_cycle_CPU(&cdb_, duty_cycle_);
+    // XCabledrumbridge_Set_man_dir_CPU(&cdb_, direction_);
+    // XCabledrumbridge_Set_ref_flex_CPU(&cdb_, reference_);
+    // XCabledrumbridge_Set_gain_CPU(&cdb_, gain_);
 
 	// DrumManualRoll action:
 	this->drum_manual_roll_server_ = rclcpp_action::create_server<DrumManualRoll>(
@@ -77,9 +77,9 @@ CableDrumController::CableDrumController(const std::string & node_name,
 
 CableDrumController::~CableDrumController() {
 
-    XCabledrumbridge_Set_mode_CPU(&cdb_, 0);
+    // XCabledrumbridge_Set_mode_CPU(&cdb_, 0);
 
-    XCabledrumbridge_Release(&cdb_);
+    // XCabledrumbridge_Release(&cdb_);
 
 }
 
@@ -140,8 +140,8 @@ void CableDrumController::followDrumManualRollCompletion(const std::shared_ptr<G
 
             fpga_mutex_.lock(); {
 
-                XCabledrumbridge_Set_man_dir_CPU(&cdb_, direction_);
-                XCabledrumbridge_Set_duty_cycle_CPU(&cdb_, duty_cycle_);
+                // XCabledrumbridge_Set_man_dir_CPU(&cdb_, direction_);
+                // XCabledrumbridge_Set_duty_cycle_CPU(&cdb_, duty_cycle_);
 
 
             } fpga_mutex_.unlock();
@@ -154,7 +154,7 @@ void CableDrumController::followDrumManualRollCompletion(const std::shared_ptr<G
 
                 fpga_mutex_.lock(); {
 
-                    XCabledrumbridge_Set_duty_cycle_CPU(&cdb_, 0);
+                    // XCabledrumbridge_Set_duty_cycle_CPU(&cdb_, 0);
 
                 } fpga_mutex_.unlock();
 
@@ -187,7 +187,7 @@ void CableDrumController::followDrumManualRollCompletion(const std::shared_ptr<G
 
                 fpga_mutex_.lock(); {
 
-                    XCabledrumbridge_Set_duty_cycle_CPU(&cdb_, 0);
+                    // XCabledrumbridge_Set_duty_cycle_CPU(&cdb_, 0);
 
                 } fpga_mutex_.unlock();
 
@@ -217,7 +217,7 @@ void CableDrumController::followDrumManualRollCompletion(const std::shared_ptr<G
 
         fpga_mutex_.lock(); {
 
-            XCabledrumbridge_Set_duty_cycle_CPU(&cdb_, 0);
+            // XCabledrumbridge_Set_duty_cycle_CPU(&cdb_, 0);
 
         } fpga_mutex_.unlock();
 
@@ -245,7 +245,7 @@ void CableDrumController::drumSetGainServiceCallback(const std::shared_ptr<iii_i
 
     fpga_mutex_.lock(); {
 
-        XCabledrumbridge_Set_gain_CPU(&cdb_, request->gain);
+        // XCabledrumbridge_Set_gain_CPU(&cdb_, request->gain);
 
     } fpga_mutex_.unlock();
 
@@ -278,7 +278,7 @@ void CableDrumController::drumSetModeServiceCallback(const std::shared_ptr<iii_i
 
     fpga_mutex_.lock(); {
 
-        XCabledrumbridge_Set_mode_CPU(&cdb_, fpga_mode);
+        // XCabledrumbridge_Set_mode_CPU(&cdb_, fpga_mode);
 
     } fpga_mutex_.unlock();
 
@@ -297,7 +297,7 @@ void CableDrumController::drumSetReferenceServiceCallback(const std::shared_ptr<
 
     fpga_mutex_.lock(); {
 
-        XCabledrumbridge_Set_ref_flex_CPU(&cdb_, request->reference);
+        // XCabledrumbridge_Set_ref_flex_CPU(&cdb_, request->reference);
 
     } fpga_mutex_.unlock();
 
@@ -322,7 +322,8 @@ void CableDrumController::infoPublishTimerCallback() {
 
     fpga_mutex_.lock(); {
 
-        sensor_flex = XCabledrumbridge_Get_sensor_flex_CPU(&cdb_);
+        // sensor_flex = XCabledrumbridge_Get_sensor_flex_CPU(&cdb_);
+        sensor_flex = 7;
 
     } fpga_mutex_.unlock();
 

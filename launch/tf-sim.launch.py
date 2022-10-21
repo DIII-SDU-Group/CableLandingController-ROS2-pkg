@@ -17,14 +17,14 @@ def generate_launch_description():
     tf_drone_to_cable_gripper = Node(
         package="tf2_ros",
         executable="static_transform_publisher",
-        arguments=["0.0", "0.0", "0.13", "0", "0.0", "0.0", "drone", "cable_gripper"]
-        #arguments=["0.0", "0.0", "0.13", "1.57079632679", "0.0", "0.0", "drone", "cable_gripper"]
+        #arguments=["0.0", "0.0", "0.13", "0", "0.0", "0.0", "drone", "cable_gripper"]
+        arguments=["0.0", "0.0", "0.09", "1.57079632679", "0.0", "0.0", "drone", "cable_gripper"]
     )
 
     tf_drone_to_iwr = Node(
         package="tf2_ros",
         executable="static_transform_publisher",
-        arguments=["0", "0", "0.05", "3.1415", "-1.57079632679", "0", "drone", "iwr6843_frame"] # Simulation
+        arguments=["0.035", "-0.23", "0.05", "3.1415", "-1.57079632679", "0", "drone", "iwr6843_frame"] # Simulation
     )
 
     world_to_drone = Node(

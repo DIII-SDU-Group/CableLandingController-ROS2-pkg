@@ -134,6 +134,7 @@ private:
     std::mutex powerline_mutex_;
 
     quat_t target_quat_;
+    float target_yaw_;
 
     void powerlineCallback(iii_interfaces::msg::Powerline::SharedPtr msg);
 

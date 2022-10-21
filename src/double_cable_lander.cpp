@@ -204,10 +204,27 @@ void DoubleCableLander::followDoubleCableLandingCompletion(const std::shared_ptr
         tmp_pose.pose.position.z -= under_cable_altitude_subtract;
         pose = tf_buffer_->transform(tmp_pose, "world");
 
-        pose.pose.orientation.w = target_quat_(0);
-        pose.pose.orientation.x = target_quat_(1);
-        pose.pose.orientation.y = target_quat_(2);
-        pose.pose.orientation.z = target_quat_(3);
+        geometry_msgs::msg::TransformStamped T_drone_to_cable_gripper = tf_buffer_->lookupTransform("cable_gripper", "drone", tf2::TimePointZero);
+
+        quat_t q_drone_to_cable_gripper(
+            T_drone_to_cable_gripper.transform.rotation.w,
+            T_drone_to_cable_gripper.transform.rotation.x,
+            T_drone_to_cable_gripper.transform.rotation.y,
+            T_drone_to_cable_gripper.transform.rotation.z
+        );
+
+        orientation_t eul_drone_to_cable_gripper = quatToEul(q_drone_to_cable_gripper);
+
+        float drone_target_yaw = target_yaw_ + eul_drone_to_cable_gripper(2);
+
+        orientation_t target_eul(0,0,drone_target_yaw);
+        quat_t target_quat = eulToQuat(target_eul);
+
+        pose.pose.orientation.w = target_quat(0);
+        pose.pose.orientation.x = target_quat(1);
+        pose.pose.orientation.y = target_quat(2);
+        pose.pose.orientation.z = target_quat(3);
+
 
         return true;
 
@@ -619,6 +636,7 @@ void DoubleCableLander::followDoubleCableLandingCompletion(const std::shared_ptr
 
         orientation_t target_eul(0,0,target_yaw);
         target_quat_ = eulToQuat(target_eul);
+        target_yaw_ = target_yaw;
 
         auto request = std::make_shared<iii_interfaces::srv::SetGeneralTargetYaw::Request>();
         request->target_yaw = target_yaw;

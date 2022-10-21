@@ -2,7 +2,7 @@ trajectory_controller:
   trajectory_controller:
     ros__parameters:
       controller_period_ms: 200
-      landed_altitude_threshold: 0.5
+      landed_altitude_threshold: 0.1
       reached_position_euclidean_distance_threshold: 0.1
       min_target_altitude: 1.
       target_cable_fixed_position_distance_threshold: 0.5
@@ -14,15 +14,15 @@ trajectory_controller:
       target_cable_safety_margin_max_yaw_velocity: 1.570796327
       target_cable_set_point_truncate_distance_threshold: 0.25
       MPC_dt: 0.2
-      position_MPC_vx_max: 1.
-      position_MPC_vy_max: 1.
-      position_MPC_vz_max: 1.
+      position_MPC_vx_max: 0.5
+      position_MPC_vy_max: 0.5
+      position_MPC_vz_max: 0.5
       position_MPC_ax_max: 1.0
       position_MPC_ay_max: 1.0
       position_MPC_az_max: 1.0
-      position_MPC_wx: 5.
-      position_MPC_wy: 5.
-      position_MPC_wz: 5.
+      position_MPC_wx: 1.
+      position_MPC_wy: 1.
+      position_MPC_wz: 1.
       position_MPC_wvx: 1.0
       position_MPC_wvy: 1.0
       position_MPC_wvz: 1.0
@@ -34,7 +34,7 @@ trajectory_controller:
       position_MPC_wjz: 0.1
       cable_landing_MPC_vx_max: 2.
       cable_landing_MPC_vy_max: 2.
-      cable_landing_MPC_vz_max: 1.
+      cable_landing_MPC_vz_max: 0.5
       cable_landing_MPC_ax_max: 1.
       cable_landing_MPC_ay_max: 1.
       cable_landing_MPC_az_max: 1.

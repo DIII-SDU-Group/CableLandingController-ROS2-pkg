@@ -99,6 +99,20 @@ ament_target_dependencies(double_cable_lander
 )
 install(TARGETS double_cable_lander DESTINATION lib/${PROJECT_NAME})
 
+add_executable(logger
+  src/logger_node.cpp
+)
+ament_target_dependencies(logger
+  rclcpp
+  iii_interfaces
+  std_msgs
+  geometry_msgs
+  tf2
+  tf2_ros
+  tf2_geometry_msgs
+)
+install(TARGETS logger DESTINATION lib/${PROJECT_NAME})
+
 # Install launch files
 install(DIRECTORY
   launch
